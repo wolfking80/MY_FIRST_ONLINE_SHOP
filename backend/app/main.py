@@ -4,8 +4,6 @@ from app.api.v1.endpoints import users
 from app.core.database import engine, Base
 
 
-# Это создаст таблицы, если их еще нет (хотя и используем Alembic, это полезный предохранитель)
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="MY ONLINE SHOP",
               description="FastAPI + React = very cool application!",
