@@ -23,7 +23,10 @@ config = context.config
 
 # ПЕРЕЗАПИСЫВАЕМ url базы данных значением из .env
 # Это заставит Alembic использовать DATABASE_URL из dotenv
-config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL"))
+# Берем именно СИНХРОННЫЙ URL для миграций
+SYNC_URL = os.getenv("SYNC_DATABASE_URL")
+if SYNC_URL:
+    config.set_main_option("sqlalchemy.url", SYNC_URL)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
