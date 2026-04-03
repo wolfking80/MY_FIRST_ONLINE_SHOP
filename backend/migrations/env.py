@@ -17,7 +17,7 @@ sys.path.insert(0, APP_DIR)
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 from app.core.database import Base
-from app.models.user import User
+from app.features.users.models import User
 
 config = context.config
 

@@ -4,9 +4,10 @@ from sqlalchemy import select
 from typing import List
 
 from app.core.database import get_db
-from app.models.user import User
-from app.schemas.user import UserCreate, UserOut
 from app.core.security import get_password_hash
+
+from .models import User
+from .schemas import UserCreate, UserOut
 
 
 router = APIRouter()

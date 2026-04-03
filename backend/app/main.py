@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1.endpoints import users
-from app.core.database import engine, Base
+from app.features.users.router import router as users_router
 
 
 
@@ -23,7 +22,7 @@ app.add_middleware(
 # ПОДКЛЮЧАЕМ РОУТЕР
 # prefix="/users" значит, что все функции из users.py
 # будут доступны по адрксу http://127.0.0
-app.include_router(users.router, prefix="/users", tags=["users"])
+app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
 
 @app.get("/")
 def read_root():
