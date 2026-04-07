@@ -6,8 +6,10 @@ function App() {
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
+        <h1>MY ONLINE SHOP</h1>
         <p>
-          Edit <code>src/App.js</code> and save to reload.
+          Архитектура: <strong>Vertical Slice</strong> <br />
+          Сборщик: <strong>Vite</strong>
         </p>
       </header>
     </div>

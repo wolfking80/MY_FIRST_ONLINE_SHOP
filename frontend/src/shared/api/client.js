@@ -1,7 +1,12 @@
 import axios from 'axios';
 
-const apiClient = axios.create({
-  baseURL: 'http://127.0.0.1:8000', // Адрес FastAPI
+// Создаем экземпляр axios с базовыми настройками
+const client = axios.create({
+  // В Vite прокси настроен на /api, поэтому пишем его здесь
+  baseURL: '/api', 
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-export default apiClient;
+export default client;
