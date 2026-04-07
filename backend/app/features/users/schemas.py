@@ -1,14 +1,13 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
-from typing import Optional
 from datetime import datetime
 
 # Общие поля для всех схем
 class UserBase(BaseModel):
     email: EmailStr
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    phone: Optional[str] = None
-    city: Optional[str] = None
+    first_name: str | None = None
+    last_name: str | None = None
+    phone: str | None = None
+    city: str | None = None
 
 # Что ждем от React при регистрации (с паролем)
 class UserCreate(UserBase):

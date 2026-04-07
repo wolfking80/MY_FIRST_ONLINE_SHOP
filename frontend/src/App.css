@@ -1,38 +1,42 @@
+/* Общий контейнер для центрирования всего */
 .App {
   text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
+  background-color: #242424; /* Современный темный фон */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
   color: white;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
-.App-link {
-  color: #61dafb;
+/* Заголовок с корзинкой */
+h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
 }
 
-@keyframes App-logo-spin {
+/* Крутящаяся корзинка */
+.spinning-cart {
+  display: inline-block;
+  perspective: 1000px;
+  animation: rotateYCart 3s linear infinite;
+  margin-right: 15px;
+  font-size: 3rem;
+}
+
+@keyframes rotateYCart {
   from {
-    transform: rotate(0deg);
+    transform: rotateY(0deg);
   }
   to {
-    transform: rotate(360deg);
+    transform: rotateY(360deg);
   }
+}
+
+/* Описание под заголовком */
+p {
+  color: #888;
+  margin-bottom: 2rem;
 }

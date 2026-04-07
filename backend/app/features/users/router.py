@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from typing import List
 
 from app.core.database import get_db
@@ -14,16 +14,23 @@ router = APIRouter()
 
 @router.post("/", response_model=UserOut, summary="Регистрация нового пользователя")
 async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
-    # Проверяем, нет ли уже такого email (асинхронно через select)
-    # Это аналог SQL: SELECT * FROM users WHERE email = '...'
-    query = select(User).where(User.email==user.email)
+    # Проверяем, нет ли уже такого email или телефона (асинхронно через select)
+    # Это аналог SQL: SELECT * FROM users WHERE email = '...' OR phone = '...'
+    query = select(User).where(or_(User.email==user.email, User.phone==user.phone))
     result= await db.execute(query)
     db_user = result.scalars().first()
 
     if db_user:
-        raise HTTPException(
+        if db_user.email==user.email:
+          raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered!"
+        )
+    
+        if user.phone and db_user.phone==user.phone:
+          raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This phone number is already using! "
         )
     
     # Хэшируем пароль
