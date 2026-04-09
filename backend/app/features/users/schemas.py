@@ -13,6 +13,13 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+
+# Для обновления
+class UserUpdate(UserBase):
+    email: EmailStr | None = None
+    password: str | None = None    
+
+
 # Что отдаем обратно в React
 class UserOut(UserBase):
     id: int
