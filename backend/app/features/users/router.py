@@ -5,43 +5,60 @@ from typing import List
 
 from app.core.database import get_db
 from . import crud, schemas
+from .dependencies import get_valid_user_by_id, validate_unique_user
 from .models import User
 
 
 router = APIRouter(prefix="/users", tags=["users"])
 
+
+# Регистрация
 @router.post(
       "/", response_model=schemas.UserOut, 
-      status_code=status.HTTP_201_CREATED, 
+      status_code=status.HTTP_201_CREATED,
       summary="New user registration")
-async def create_user(new_user: schemas.UserCreate, db: AsyncSession = Depends(get_db)) -> User:
-   return await crud.create_user(new_user, db)
+async def create_user(
+   new_user: schemas.UserCreate = Depends(validate_unique_user),
+   db: AsyncSession = Depends(get_db)) -> User:
+   return await crud.create_user(db, new_user)
 
 
-@router.get("/", response_model=List[schemas.UserOut],summary="Get all users from database")
+# Получение всех пользователей
+@router.get("/", response_model=List[schemas.UserOut], summary="Get all users from database")
 async def get_all_users(db: AsyncSession = Depends(get_db)) -> list[User]:
     return await crud.get_all_users(db)
 
 
-@router.get("/{user_id}", response_model=schemas.UserOut,summary="Get user by ID")
-async def get_user_by_id(user_id: int, db: AsyncSession=Depends(get_db)) -> User:
-   return await crud.is_valid_user_id(user_id, db)
+# Получение пользователя по ID
+@router.get("/{user_id}", response_model=schemas.UserOut, summary="Get user by ID")
+async def get_user_by_id(user: User = Depends(get_valid_user_by_id)) -> User:
+   return user
 
 
-@router.patch("/{user_id}", response_model=schemas.UserOut,summary="Partial update user-data")
-async def partial_update_user(user_id: int, update_data: schemas.UserUpdate,db: AsyncSession=Depends(get_db)) -> User:
-   user = await crud.is_valid_user_id(user_id, db)
-   return await crud.perform_update(update_data, db, user, partial=True)
+# Частичное обновление
+@router.patch("/{user_id}", response_model=schemas.UserOut, summary="Partial update user-data")
+async def partial_update_user(
+   update_data: schemas.UserUpdate,
+   user: User = Depends(get_valid_user_by_id),
+   db: AsyncSession=Depends(get_db)
+   ) -> User:
+   return await crud.perform_update(db, user, update_data, partial=True)
 
 
-@router.put("/{user_id}", response_model=schemas.UserOut,summary="Full update user-data")
-async def full_update_user(user_id: int,update_data: schemas.UserUpdate,db: AsyncSession=Depends(get_db)) -> User:
-   user = await crud.is_valid_user_id(user_id, db)
-   return await crud.perform_update(update_data, db, user, partial=False)
+# Полное обновление
+@router.put("/{user_id}", response_model=schemas.UserOut, summary="Full update user-data")
+async def full_update_user(
+   update_data: schemas.UserUpdate,
+   user: User = Depends(get_valid_user_by_id),
+   db: AsyncSession=Depends(get_db)
+   ) -> User:
+   return await crud.perform_update(db, user, update_data, partial=False)
    
 
-@router.delete("/{user_id}", summary="Delete user by ID from database")
-async def delete_user(user_id: int, db: AsyncSession=Depends(get_db)) -> dict:
-   user = await crud.is_valid_user_id(user_id, db)
-   await crud.delete_user(user, db)
-   return  {"message": f"User {user_id} successfully deleted from DB!", "status": "success"}
+# Удаление пользователя
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete user by ID from database")
+async def delete_user(
+   user: User = Depends(get_valid_user_by_id),
+   db: AsyncSession=Depends(get_db)) -> None:
+   await crud.delete_user(db, user)
+   return None

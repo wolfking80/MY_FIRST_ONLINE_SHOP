@@ -15,9 +15,15 @@ class UserCreate(UserBase):
 
 
 # Для обновления
-class UserUpdate(UserBase):
+class UserUpdate(BaseModel):
+# Не наследуемся от UserBase, чтобы сделать ВСЕ поля необязательными
+# Это позволит пользователю поменять, например, только телефон, не присылая имя
     email: EmailStr | None = None
-    password: str | None = None    
+    password: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    phone: str | None = None
+    city: str | None = None   
 
 
 # Что отдаем обратно в React
