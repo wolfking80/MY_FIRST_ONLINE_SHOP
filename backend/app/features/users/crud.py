@@ -20,12 +20,16 @@ async def get_user_by_id(db: AsyncSession, user_id: int) -> User | None:
 async def get_user_by_email_or_phone(db: AsyncSession, email: str, phone: str | None) -> User | None:
   # Проверяем, нет ли уже такого email или телефона (асинхронно через select)
   # Это аналог SQL: SELECT * FROM users WHERE email = '...' OR phone = '...'
-  query = select(User).where(or_(User.email == email, User.phone == phone))
+  # Динамически собираем условия, чтобы не искать по phone=None
+  conditions = [User.email == email]
+  if phone:
+    conditions.append(User.phone == phone)
+  query = select(User).where(or_(*conditions))
   result = await db.execute(query)
   return result.scalars().first()
 
 # Создание пользователя (CREATE)
-async def create_user(user: UserCreate, db: AsyncSession) -> User:
+async def create_user(db: AsyncSession, user: UserCreate) -> User:
   # Хэшируем пароль
   hashed_pass = get_password_hash(user.password)
     
@@ -50,9 +54,9 @@ async def create_user(user: UserCreate, db: AsyncSession) -> User:
   return new_user
 
 
-# Получить всех пользователей (GET)
-async def get_all_users(db: AsyncSession) -> List[User]:
-  query = select(User)
+# Получить всех пользователей (GET) - с пагинацией, чтобы роутер не "лег", если пользователей очень много
+async def get_all_users(db: AsyncSession, skip: int=0, limit: int=100) -> List[User]:
+  query = select(User).offset(skip).limit(limit)
   result = await db.execute(query)
   return result.scalars().all()
 
@@ -76,7 +80,9 @@ async def perform_update(
      user.hashed_password = get_password_hash(data.pop("password"))
   # Обновляем объект пользователя
   for key, value in data.items():
-     setattr(user, key, value)
+     # Защита от лишних полей в схеме
+     if hasattr(user, key): 
+       setattr(user, key, value)
   
   # Отправляем изменения в БД
   await db.commit()
