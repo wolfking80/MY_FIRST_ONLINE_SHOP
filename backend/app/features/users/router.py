@@ -5,7 +5,7 @@ from typing import List
 
 from app.core.database import get_db
 from . import crud, schemas
-from .dependencies import get_valid_user_by_id, validate_unique_user
+from .dependencies import get_current_user, get_valid_user_by_id, validate_unique_user
 from .models import User
 
 
@@ -21,6 +21,12 @@ async def create_user(
    new_user: schemas.UserCreate = Depends(validate_unique_user),
    db: AsyncSession = Depends(get_db)) -> User:
    return await crud.create_user(db, new_user)
+
+
+# Идентификация: возвращает данные текущего авторизованного пользователя
+@router.get("/me", response_model=schemas.UserOut)
+async def read_users_me(current_user: User = Depends(get_current_user)):
+   return current_user
 
 
 # Получение всех пользователей

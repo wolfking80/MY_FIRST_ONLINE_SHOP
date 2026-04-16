@@ -35,4 +35,17 @@ class UserOut(UserBase):
     # Учим Pydantic общаться с БД
     # По умолчанию Pydantic умеет читать данные только из словарей (data["name"]).
     # А SQLAlchemy отдает данные как объекты (data.name).
-    model_config = ConfigDict(from_attributes=True)    
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Ответ сервера клиенту после успешного логина. 
+# Клиент получает токен и должен отправлять его в следующих запросах.
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+# Внутреннее представление данных, которые извлекаются из JWT токена после его проверки. 
+# Не отправляется клиенту, используется внутри сервера
+class TokenData(BaseModel):
+    user_id: int | None = None
