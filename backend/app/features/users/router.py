@@ -5,7 +5,7 @@ from typing import List
 
 from app.core.database import get_db
 from . import crud, schemas
-from .dependencies import get_current_user, get_valid_user_by_id, validate_unique_user
+from .dependencies import check_admin, get_current_user, get_valid_user_by_id, validate_unique_user
 from .models import User
 
 
@@ -31,7 +31,10 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 
 # Получение всех пользователей
 @router.get("/", response_model=List[schemas.UserOut], summary="Get all users from database")
-async def get_all_users(db: AsyncSession = Depends(get_db)) -> list[User]:
+async def get_all_users(
+   db: AsyncSession = Depends(get_db),
+   admin: User = Depends(check_admin)
+   ) -> list[User]:
     return await crud.get_all_users(db)
 
 
@@ -65,6 +68,7 @@ async def full_update_user(
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete user by ID from database")
 async def delete_user(
    user: User = Depends(get_valid_user_by_id),
+   _: User = Depends(check_admin),
    db: AsyncSession=Depends(get_db)) -> None:
    await crud.delete_user(db, user)
    return None

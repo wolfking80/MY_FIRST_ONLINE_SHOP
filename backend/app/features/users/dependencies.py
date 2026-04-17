@@ -35,7 +35,17 @@ async def get_current_user(
   if user is None:
     raise credentials_exception
   
-  return user  
+  return user
+
+
+# Функция-фильтр для проверки статуса суперпользователя (администратора)
+async def check_admin(current_user: User = Depends(get_current_user)) -> User:
+  if not current_user.is_superuser:
+    raise HTTPException(
+      status_code=status.HTTP_403_FORBIDDEN,
+      detail="The user doesn't have enough privileges"
+    )
+  return current_user
 
 
 # Проверка существования пользователя для GET | PATCH | DELETE
