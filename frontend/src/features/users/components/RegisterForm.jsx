@@ -2,8 +2,12 @@ import './RegisterForm.css';
 
 import { useState } from 'react';
 import { createUser } from '../api';
+import { useNavigate } from 'react-router-dom';
 
 export const RegisterForm = () => {
+    // Инициализация - создание "пульта управления" навигацией
+    const navigate = useNavigate();
+    // Состояние для данных формы
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -17,12 +21,11 @@ export const RegisterForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            // Отправляем объект целиком в api.js
-            const newUser = await createUser(formData);
-            setMessage(`✅ Успех! Юзер ${newUser.email} создан.`);
-            // Очистка формы
-            setFormData({ email: '', password: '', first_name: '', last_name: '', phone: '', city: '' });
+            await createUser(formData);
+            // Переход в ЛК
+            navigate('/profile');
         } catch (err) {
+            // Если email или телефон уже заняты, FastAPI вернет ошибку, и она отобразится
             setMessage('❌ Ошибка: ' + (err.response?.data?.detail || 'Не удалось создать аккаунт'));
         }
     };
@@ -46,9 +49,7 @@ export const RegisterForm = () => {
                     Зарегистрироваться
                 </button>
             </form>
-            {message && (
-                <div className={`status-message ${message.includes('✅') ? 'success' : 'error'}`}>{message}</div>
-            )}
+            {message && <div className="status-message error">{message}</div>}
         </div>
     );
 };

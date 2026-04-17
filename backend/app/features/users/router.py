@@ -9,7 +9,7 @@ from .dependencies import check_admin, get_current_user, get_valid_user_by_id, v
 from .models import User
 
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(tags=["users"])
 
 
 # Регистрация
