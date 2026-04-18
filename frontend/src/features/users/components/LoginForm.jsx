@@ -1,3 +1,5 @@
+import './Auth.css';
+
 import { useState } from 'react';
 import { loginUser } from '../api';
 import { Link, useNavigate } from 'react-router-dom';
@@ -18,21 +20,24 @@ export const LoginForm = () => {
   };
 
   return (
-    <div style={{ maxWidth: '300px', margin: 'auto' }}>
+    <div className="auth-container">
       <h3>Вход</h3>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Пароль" value={password} onChange={e => setPassword(e.target.value)} required />
-        <button type="submit">Войти</button>
+      <form onSubmit={handleSubmit} className="auth-form">
+        <input
+          type="email" name="email" placeholder="Электронная почта"
+          value={email} onChange={e => setEmail(e.target.value)} required
+        />
+        <input
+          type="password" name="password" placeholder="Пароль"
+          value={password} onChange={e => setPassword(e.target.value)} required
+        />
+        <button type="submit" className="auth-button">Войти</button>
       </form>
 
-      <div style={{ marginTop: '15px', fontSize: '0.9rem', textAlign: 'center' }}>
+      <div className="auth-footer">
         <span>Нет аккаунта? </span>
-        <Link to="/" style={{ color: '#646cff', textDecoration: 'none', fontWeight: 'bold' }}>
-          Зарегистрироваться
-        </Link>
+        <Link to="/" className="auth-link">Зарегистрироваться</Link>
       </div>
-
     </div>
   );
 };

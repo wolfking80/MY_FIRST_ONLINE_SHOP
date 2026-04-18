@@ -1,4 +1,4 @@
-import './RegisterForm.css';
+import './Auth.css';
 
 import { useState } from 'react';
 import { createUser } from '../api';
@@ -35,29 +35,51 @@ export const RegisterForm = () => {
     };
 
     return (
-        <div style={{ maxWidth: '400px', margin: '20px auto', textAlign: 'left', color: 'white' }}>
-            <h3>Регистрация на сайте</h3>
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <input name="email" type="email" placeholder="Email (обязательно)" value={formData.email} onChange={handleChange} required />
-                <input name="password" type="password" placeholder="Пароль (обязательно)" value={formData.password} onChange={handleChange} required />
-                <input name="first_name" type="text" placeholder="Имя" value={formData.first_name} onChange={handleChange} />
-                <input name="last_name" type="text" placeholder="Фамилия" value={formData.last_name} onChange={handleChange} />
-                <input name="phone" type="text" placeholder="Телефон" value={formData.phone} onChange={handleChange} />
-                <input name="city" type="text" placeholder="Город" value={formData.city} onChange={handleChange} />
+        <div className="auth-container">
+            <h3>Регистрация</h3>
+            <form onSubmit={handleSubmit} className="auth-form">
+                <input
+                    name="email" type="email" placeholder="Email (обязательно)"
+                    value={formData.email} onChange={handleChange} required
+                />
+                <input
+                    name="password" type="password" placeholder="Пароль (обязательно)"
+                    value={formData.password} onChange={handleChange} required
+                />
+                <input
+                    name="first_name" type="text" placeholder="Имя"
+                    value={formData.first_name} onChange={handleChange}
+                />
+                <input
+                    name="last_name" type="text" placeholder="Фамилия"
+                    value={formData.last_name} onChange={handleChange}
+                />
+                <input
+                    name="phone" type="text" placeholder="Телефон"
+                    value={formData.phone} onChange={handleChange}
+                />
+                <input
+                    name="city" type="text" placeholder="Город"
+                    value={formData.city} onChange={handleChange}
+                />
 
-                <button type="submit" style={{ padding: '10px', background: '#646cff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                    Зарегистрироваться
+                <button type="submit" className="auth-button">
+                    Создать аккаунт
                 </button>
             </form>
 
-            <div style={{ marginTop: '15px', fontSize: '0.9rem', textAlign: 'center' }}>
+            {message && (
+                <div style={{ marginTop: '15px', color: '#ff4d4d', textAlign: 'center', fontSize: '0.9rem' }}>
+                    {message}
+                </div>
+            )}
+
+            <div className="auth-footer">
                 <span>Уже есть аккаунт? </span>
-                <Link to="/login" style={{ color: '#646cff', textDecoration: 'none', fontWeight: 'bold' }}>
+                <Link to="/login" className="auth-link">
                     Войти
                 </Link>
             </div>
-            
-            {message && <div className="status-message error">{message}</div>}
         </div>
     );
 };

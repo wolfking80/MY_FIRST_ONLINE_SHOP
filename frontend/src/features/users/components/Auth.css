@@ -1,0 +1,120 @@
+/* Контейнер для центрирования */
+.auth-container {
+  max-width: 450px; /* Сделали форму пошире */
+  margin: 40px auto;
+  padding: 30px;
+  background: #242424; /* Темный фон в стиле Vite */
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  color: white;
+}
+
+.auth-container h3 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 1.8rem;
+  color: #646cff;
+}
+
+/* Стили для самой формы */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Расстояние между полями */
+}
+
+/* Поля ввода на всю ширину */
+.auth-form input {
+  padding: 12px 16px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 2px solid #3f3f3f;
+  background: #1a1a1a;
+  color: white;
+  transition: border-color 0.3s ease;
+  width: 100%; /* Занимает всю ширину контейнера */
+  box-sizing: border-box; /* Чтобы паддинги не раздували ширину */
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: #646cff; /* Подсветка при клике */
+}
+
+/* Кнопка */
+.auth-button {
+  padding: 14px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  background-color: #646cff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  margin-top: 10px;
+}
+
+.auth-button:hover {
+  background-color: #747bff;
+}
+
+.auth-button:active {
+  transform: scale(0.98);
+}
+
+/* Ссылка под формой */
+.auth-footer {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #aaa;
+}
+
+.auth-link {
+  color: #646cff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+.status-message {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 5px;
+  color: white;
+  text-align: center;
+  font-weight: bold;
+  /* Плавное появление */
+  animation: fadeIn 0.3s ease-in;
+}
+
+.status-message.success {
+  background-color: #2e7d32;
+  /* Зеленый */
+}
+
+.status-message.error {
+  background-color: #d32f2f;
+  /* Красный */
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+h3 {
+  text-align: center;
+  margin-bottom: 20px;
+}
