@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,14 +15,22 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/login")
 
 # Функция-фильтр, которая проверяет токен и «узнает» пользователя
 async def get_current_user(
-    db: AsyncSession = Depends(get_db),
-    token: str = Depends(oauth2_scheme)
+    request: Request,    # Используем request, чтобы залезть в куки
+    db: AsyncSession = Depends(get_db)
   ) -> User:
   credentials_exception = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Could not validate credentials",
-    headers={"WWW-Authenticate": "Bearer"},
+    detail="Authorization required!"
   )
+
+  # Пытаемся достать токен из куки
+  token_with_bearer = request.cookies.get("access_token")
+
+  if not token_with_bearer or not token_with_bearer.startswith("Bearer "):
+        raise credentials_exception
+  
+  token = token_with_bearer.split(" ")[1] # Отрезаем "Bearer"
+
   try:
     payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     user_id: str = payload.get("sub")

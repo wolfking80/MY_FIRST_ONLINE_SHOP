@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
@@ -11,6 +11,7 @@ router = APIRouter(tags=["auth"])
 # Аутентификация: проверка пароля и выдача JWT-токена доступа
 @router.post("/login", response_model=schemas.Token)
 async def login(
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db)
 ):
@@ -23,4 +24,19 @@ async def login(
         )
 
     access_token = create_access_token(data={"sub": str(user.id)})
-    return {"access_token": access_token, "token_type": "bearer"}
+
+    # Устанавливаем куку
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {access_token}",
+        httponly=True,  # JavaScript не сможет прочитать куку (Защита!) - Защита от XSS
+        max_age=1800,   # 30 минут
+        samesite="lax", # Защита от CSRF
+        secure=False,   # Ставим True, когда будет HTTPS (на продакшене)
+    )
+    # Оставляем JSON для Swagger-тестов (замочка)
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "message": "Successful login"
+        }
