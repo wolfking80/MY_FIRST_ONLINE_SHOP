@@ -2,7 +2,7 @@ import './RegisterForm.css';
 
 import { useState } from 'react';
 import { createUser } from '../api';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export const RegisterForm = () => {
     // Инициализация - создание "пульта управления" навигацией
@@ -49,6 +49,14 @@ export const RegisterForm = () => {
                     Зарегистрироваться
                 </button>
             </form>
+
+            <div style={{ marginTop: '15px', fontSize: '0.9rem', textAlign: 'center' }}>
+                <span>Уже есть аккаунт? </span>
+                <Link to="/login" style={{ color: '#646cff', textDecoration: 'none', fontWeight: 'bold' }}>
+                    Войти
+                </Link>
+            </div>
+            
             {message && <div className="status-message error">{message}</div>}
         </div>
     );

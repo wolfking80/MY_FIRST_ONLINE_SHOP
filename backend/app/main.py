@@ -24,7 +24,7 @@ app.add_middleware(
 # ПОДКЛЮЧАЕМ РОУТЕР
 # prefix="/users" значит, что все функции из users.py
 # будут доступны по адрксу http://127.0.0
-app.include_router(auth_router, prefix="/api/v1/users", tags=["auth"])
+app.include_router(auth_router, prefix="/api/v1", tags=["auth"])
 app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
 
 @app.get("/")

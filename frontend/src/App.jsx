@@ -1,14 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Profile } from './features/users/components/Profile';
 import { RegisterForm } from './features/users/components/RegisterForm'; // Импорт формы регистрации
+import { LoginForm } from './features/users/components/LoginForm';   // Импорт формы авторизации
 import './App.css';
-
-
-// Будущий Личный Кабинет
-const Profile = () => (
-  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '100px' }}>
-    <h2>ТУТ СКОРО БУДЕТ ЛК ПОЛЬЗОВАТЕЛЯ</h2>
-  </div>
-);
 
 
 function App() {
@@ -19,8 +13,10 @@ function App() {
           <h1><span className="spinning-cart">🛒</span>MY ONLINE SHOP</h1>
 
           <Routes>
-            {/* Путь для главной страницы */}
+            {/* Путь для формы регистрации */}
             <Route path="/" element={<RegisterForm />} />
+            {/* Путь для  формы авторизации */}
+            <Route path="/login" element={<LoginForm />} />
             {/* Путь для личного кабинета */}
             <Route path="/profile" element={<Profile />} />
           </Routes>

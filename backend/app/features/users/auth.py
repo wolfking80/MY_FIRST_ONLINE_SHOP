@@ -5,7 +5,7 @@ from app.core.database import get_db
 from app.core.security import verify_password, create_access_token
 from . import crud, schemas
 
-router = APIRouter(tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 # Аутентификация: проверка пароля и выдача JWT-токена доступа
@@ -34,9 +34,21 @@ async def login(
         samesite="lax", # Защита от CSRF
         secure=False,   # Ставим True, когда будет HTTPS (на продакшене)
     )
-    # Оставляем JSON для Swagger-тестов (замочка)
+
     return {
-        "access_token": access_token,
+        "access_token": access_token, 
         "token_type": "bearer",
         "message": "Successful login"
-        }
+    }
+
+
+# Выход из аккаунта
+@router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        samesite="lax",
+        secure=False
+    )
+    return {"message": "Logged out"}
