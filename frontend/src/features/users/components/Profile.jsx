@@ -20,39 +20,34 @@ export const Profile = () => {
   if (!user) return <div>Загрузка...</div>;
 
   return (
-    <div className="auth-container" style={{ maxWidth: '600px' }}>
+    <div className="auth-container" style={{ maxWidth: '500px' }}>
       <h3>Личный кабинет</h3>
-
-      <div className="auth-form" style={{ gap: '20px' }}>
-        <div style={{ borderBottom: '1px solid #3f3f3f', paddingBottom: '10px' }}>
-          <span style={{ color: '#aaa', fontSize: '0.9rem' }}>Email</span>
-          <div style={{ fontSize: '1.1rem', marginTop: '5px' }}>{user.email}</div>
+      
+      <div className="auth-form">
+        <div className="profile-info-item">
+          <span className="profile-label">Email</span>
+          <div className="profile-value">{user.email}</div>
         </div>
 
-        <div style={{ borderBottom: '1px solid #3f3f3f', paddingBottom: '10px' }}>
-          <span style={{ color: '#aaa', fontSize: '0.9rem' }}>Имя и Фамилия</span>
-          <div style={{ fontSize: '1.1rem', marginTop: '5px' }}>
+        <div className="profile-info-item">
+          <span className="profile-label">Имя и Фамилия</span>
+          <div className="profile-value">
             {user.first_name} {user.last_name}
           </div>
         </div>
 
-        <div style={{ borderBottom: '1px solid #3f3f3f', paddingBottom: '10px' }}>
-          <span style={{ color: '#aaa', fontSize: '0.9rem' }}>Город</span>
-          <div style={{ fontSize: '1.1rem', marginTop: '5px' }}>{user.city || 'Не указан'}</div>
+        <div className="profile-info-item">
+          <span className="profile-label">Город</span>
+          <div className="profile-value">{user.city || 'Не указан'}</div>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: '10px' }}>
-          <span style={{
-            background: user.is_superuser ? '#646cff' : '#3f3f3f',
-            padding: '4px 12px',
-            borderRadius: '20px',
-            fontSize: '0.8rem'
-          }}>
-            {user.is_superuser ? '💎 АДМИНИСТРАТОР' : '👤 ПОКУПАТЕЛЬ'}
+        <div className="status-badge-container">
+          <span className={`status-badge ${user.is_superuser ? 'status-admin' : 'status-user'}`}>
+            {user.is_superuser ? '💎 Администратор' : '👤 Покупатель'}
           </span>
         </div>
 
-        <button onClick={handleLogout} className="auth-button" style={{ background: '#ff4d4d' }}>
+        <button onClick={handleLogout} className="auth-button button-logout">
           Выйти из аккаунта
         </button>
       </div>

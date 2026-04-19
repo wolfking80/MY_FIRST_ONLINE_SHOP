@@ -118,3 +118,56 @@ h3 {
   text-align: center;
   margin-bottom: 20px;
 }
+
+/* Стили для карточки профиля */
+.profile-info-item {
+  border-bottom: 1px solid #3f3f3f;
+  padding-bottom: 10px;
+  text-align: left; /* Чтобы текст был слева, как в анкете */
+}
+
+.profile-label {
+  color: #aaa;
+  font-size: 0.9rem;
+  display: block;
+}
+
+.profile-value {
+  font-size: 1.1rem;
+  margin-top: 5px;
+  color: #fff;
+}
+
+/* Бейдж статуса (Админ/Покупатель) */
+.status-badge-container {
+  text-align: center;
+  margin: 15px 0;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.status-admin {
+  background-color: #646cff;
+  color: white;
+}
+
+.status-user {
+  background-color: #3f3f3f;
+  color: #ccc;
+}
+
+/* Красная кнопка выхода */
+.button-logout {
+  background-color: #ff4d4d !important; /* Перекрываем основной цвет кнопки */
+  margin-top: 20px;
+}
+
+.button-logout:hover {
+  background-color: #ff3333 !important;
+}
