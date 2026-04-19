@@ -10,12 +10,14 @@ from .models import User
 
 
 # Создаём экземпляр, указывая URL эндпоинта для логина
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/login")
+# auto_error=False дает возможность коду проверить другие способы авторизации (куки)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
 # Функция-фильтр, которая проверяет токен и «узнает» пользователя
 async def get_current_user(
     request: Request,    # Используем request, чтобы залезть в куки
+    token_from_header: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db)
   ) -> User:
   credentials_exception = HTTPException(
@@ -25,6 +27,10 @@ async def get_current_user(
 
   # Пытаемся достать токен из куки
   token_with_bearer = request.cookies.get("access_token")
+
+  # Если в куке пусто, проверяем ЗАГОЛОВОК (замочек в Swagger'е)
+  if not token_with_bearer:
+    token_with_bearer = token_from_header
 
   if not token_with_bearer or not token_with_bearer.startswith("Bearer "):
         raise credentials_exception
