@@ -36,8 +36,15 @@ class Category(Base):
     parent_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id"))
     
     products: Mapped[List["Product"]] = relationship(back_populates="category")
-    subcategories: Mapped[List["Category"]] = relationship()
-    parent: Mapped["Category | None"] = relationship(remote_side=[id])
+    subcategories: Mapped[List["Category"]] = relationship(
+        back_populates="parent", 
+        cascade="all, delete-orphan"
+    )
+    parent: Mapped["Category | None"] = relationship(
+        back_populates="subcategories", 
+        remote_side=[id],
+        overlaps="subcategories"
+    )
 
 # === ТОВАРЫ ===
 class Product(Base):

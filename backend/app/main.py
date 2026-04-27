@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.features import all_models
+from app.features.products.router import router as products_router
 from app.features.users.router import router as users_router
 from app.features.users.auth import router as auth_router
 
@@ -26,6 +28,8 @@ app.add_middleware(
 # будут доступны по адрксу http://127.0.0
 app.include_router(auth_router, prefix="/api/v1", tags=["auth"])
 app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
+# Подключаем каталог товаров
+app.include_router(products_router, prefix="/api/v1/products", tags=["products"])
 
 @app.get("/")
 def read_root():
