@@ -17,6 +17,7 @@ sys.path.insert(0, APP_DIR)
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 from app.core.database import Base
+from app.features.carts.models import Cart, CartItem
 from app.features.users.models import User
 from app.features.products.models import Product, Category, Brand, ProductVariant, ProductImage, Review, Favorite
 from app.features.orders.models import Order, OrderItem

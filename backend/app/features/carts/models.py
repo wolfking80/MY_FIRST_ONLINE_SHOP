@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import ForeignKey, Integer, Index, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Integer, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from typing import TYPE_CHECKING, List
@@ -16,7 +16,11 @@ class Cart(Base):
     status: Mapped[str] = mapped_column(default="active")
     converted_to_order_id: Mapped[int | None] = mapped_column(ForeignKey("orders.id"))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+    DateTime(timezone=True), # Убедись, что тип указан явно
+    server_default=func.now(), 
+    onupdate=func.now()
+)
     
     user: Mapped["User"] = relationship(back_populates="cart")
     
