@@ -2,8 +2,11 @@ from datetime import datetime
 from sqlalchemy import ForeignKey, Integer, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-from typing import List
+from typing import TYPE_CHECKING, List
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.features.users.models import User
 
 class Cart(Base):
     __tablename__ = "carts"
@@ -14,6 +17,8 @@ class Cart(Base):
     converted_to_order_id: Mapped[int | None] = mapped_column(ForeignKey("orders.id"))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(onupdate=func.now())
+    
+    user: Mapped["User"] = relationship(back_populates="cart")
     
     items: Mapped[List["CartItem"]] = relationship(back_populates="cart", cascade="all, delete-orphan")
 
