@@ -47,6 +47,14 @@ export const RegisterForm = () => {
                     value={formData.password} onChange={handleChange} required
                 />
                 <input
+                    type="text"
+                    name="username"
+                    placeholder="Придумайте никнейм"
+                    value={formData.username}
+                    onChange={handleChange}
+                    required
+                />
+                <input
                     name="first_name" type="text" placeholder="Имя"
                     value={formData.first_name} onChange={handleChange}
                 />

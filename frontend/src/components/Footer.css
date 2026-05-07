@@ -1,0 +1,43 @@
+/* Контейнер для всего подвала */
+.main-footer {
+    background-color: #2c3e50; /* Темный цвет под шапку */
+    color: #ecf0f1;
+    padding: 20px 0;
+    margin-top: 50px; /* Отступ от товаров */
+    border-top: 3px solid #f1c40f; /* Золотистая полоска как у админ-кнопки */
+    text-align: center;
+    width: 100%;
+    text-align: center; 
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.footer-links span {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.footer-links span:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.footer-content p {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.6;
+}

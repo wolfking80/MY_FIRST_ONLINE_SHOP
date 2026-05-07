@@ -36,13 +36,18 @@ async def create_user(db: AsyncSession, user: UserCreate) -> User:
   # Превращаем Pydantic-объект user (из React) в обычный Python-словарь
   # «ключ: значение»
   user_data = user.model_dump()
+  
+  # Превращаем пустые строки в None (чтобы не было ошибки Unique для необязательных полей)
+  for key, value in user_data.items():
+    if value == "":
+      user_data[key] = None
 
   # Удаляем из этого словаря чистый пароль
   user_data.pop("password")
   
   # Если в форме не было username, используем email как никнейм
   if not user_data.get("username"):
-    user_data["username"] = user_data["email"]
+    user_data["username"] = user_data["email"]  
 
   # Создаем объект для записи в БД, распаковываем словарь
   # и добавляем зашифрованный пароль

@@ -17,7 +17,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=F
 # Функция-фильтр, которая проверяет токен и «узнает» пользователя
 async def get_current_user(
     request: Request,    # Используем request, чтобы залезть в куки
-    token_from_header: str = Depends(oauth2_scheme),
+    token_from_header: str | None = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db)
   ) -> User:
   credentials_exception = HTTPException(

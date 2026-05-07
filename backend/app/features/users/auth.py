@@ -38,7 +38,11 @@ async def login(
     return {
         "access_token": access_token, 
         "token_type": "bearer",
-        "message": "Successful login"
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "role": user.role
+        }
     }
 
 

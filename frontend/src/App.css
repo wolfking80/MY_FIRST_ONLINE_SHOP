@@ -1,14 +1,22 @@
 /* Общий контейнер для центрирования всего */
 .App {
-  text-align: center;
+  text-align: left;
   background-color: #242424; /* Современный темный фон */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   color: white;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+/* Растягиваем контентную часть */
+main {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px; /* Чтобы контент не расплывался слишком сильно на больших мониторах */
+  margin: 0 auto;
+  padding: 40px 20px;
+  box-sizing: border-box;
 }
 
 /* Заголовок с корзинкой */

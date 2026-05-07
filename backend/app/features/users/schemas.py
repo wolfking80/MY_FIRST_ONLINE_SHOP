@@ -4,6 +4,7 @@ from datetime import datetime
 # Общие поля для всех схем
 class UserBase(BaseModel):
     email: EmailStr
+    username: str | None
     first_name: str | None = None
     last_name: str | None = None
     phone: str | None = None
@@ -11,6 +12,7 @@ class UserBase(BaseModel):
 
 # Что ждем от React при регистрации (с паролем)
 class UserCreate(UserBase):
+    username: str
     password: str
 
 
@@ -20,6 +22,7 @@ class UserUpdate(BaseModel):
 # Это позволит пользователю поменять, например, только телефон, не присылая имя
     email: EmailStr | None = None
     password: str | None = None
+    username: str | None
     first_name: str | None = None
     last_name: str | None = None
     phone: str | None = None
@@ -32,6 +35,12 @@ class UserOut(UserBase):
     created_at: datetime
     is_active: bool
     role: str
+    
+    
+class UserShort(BaseModel):
+    id: int
+    username: str
+    role: str    
 
     # Учим Pydantic общаться с БД
     # По умолчанию Pydantic умеет читать данные только из словарей (data["name"]).
@@ -44,6 +53,7 @@ class UserOut(UserBase):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    user: UserShort
 
 
 # Внутреннее представление данных, которые извлекаются из JWT токена после его проверки. 

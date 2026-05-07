@@ -1,0 +1,97 @@
+/* Header.css */
+
+/* Контейнер всей шапки */
+.main-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 10px 5% !important;
+    background-color: #2c3e50 !important;
+    color: white !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    min-height: 70px;
+}
+
+/* Логотип */
+.logo {
+    font-size: 1.5rem !important;
+    font-weight: bold !important;
+    text-decoration: none !important;
+    color: white !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+/* Левая часть (навигация) */
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 30px; /* Расстояние между лого и кнопкой Каталог */
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.nav-link:hover {
+    opacity: 1;
+    text-underline-offset: 5px;
+    text-decoration: underline;
+}
+
+/* Правая часть (навигация) */
+.nav-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 20px !important;
+}
+
+/* Блок с именем и кнопкой выхода */
+.user-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important; /* ВОТ ОН, ТВОЙ ОТСТУП */
+}
+
+/* Блок с кнопками Войти/Рег */
+.auth-btns {
+    display: flex !important;
+    gap: 15px !important;
+}
+
+/* Общий стиль для всех кнопок в шапке */
+.auth-btns a, .user-info button, .admin-link {
+    text-decoration: none !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    transition: 0.3s !important;
+    cursor: pointer !important;
+    border: none !important;
+}
+
+/* Кнопка админа (золотая) */
+.admin-link {
+    background-color: #f1c40f !important;
+    color: #2c3e50 !important;
+}
+
+/* Ссылки Войти/Рег */
+.auth-btns a {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Кнопка Выйти */
+.user-info button {
+    background-color: #e74c3c !important;
+    color: white !important;
+}
