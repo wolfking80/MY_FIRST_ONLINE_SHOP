@@ -1,3 +1,5 @@
+from fastapi.staticfiles import StaticFiles
+
 from app.features import all_models
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,6 +36,8 @@ app.include_router(auth_router, prefix="/api/v1", tags=["auth"])
 app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
 # Подключаем каталог товаров
 app.include_router(products_router, prefix="/api/v1/products", tags=["products"])
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 def read_root():

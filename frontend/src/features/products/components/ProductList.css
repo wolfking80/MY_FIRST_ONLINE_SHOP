@@ -1,0 +1,87 @@
+/* Контейнер для всей сетки */
+.product-grid {
+    display: grid;
+    /* Автоматические колонки: минимум 250px, максимум — сколько влезет */
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 30px;
+    padding: 20px 0;
+    align-items: start;
+}
+
+/* Сама карточка товара */
+.product-card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #eaeaea;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+/* Контейнер для фото */
+.product-image-container {
+    width: 100%;
+    height: 200px;
+    background: #f9f9f9;
+    overflow: hidden;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Чтобы фото не растягивалось, а аккуратно заполняло блок */
+}
+
+/* Инфо-блок внутри карточки */
+.product-info {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-grow: 1;
+}
+
+.product-name {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+    font-weight: 600;
+}
+
+.product-price {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 5px 0;
+}
+
+/* Красивая кнопка "В корзину" */
+.add-to-cart-btn {
+    margin-top: auto;
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.add-to-cart-btn:hover {
+    background: #219150;
+}
+
+.add-to-cart-btn:active {
+    transform: scale(0.98);
+}

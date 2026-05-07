@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AddProductForm } from './features/admin/components/AddProductForm';
+import { ProductList } from './features/products/components/ProductList';
 import { Profile } from './features/users/components/Profile';
 import { RegisterForm } from './features/users/components/RegisterForm'; // Импорт формы регистрации
 import { LoginForm } from './features/users/components/LoginForm';   // Импорт формы авторизации
@@ -14,8 +15,10 @@ function App() {
           <h1><span className="spinning-cart">🛒</span>MY ONLINE SHOP</h1>
 
           <Routes>
+            {/* Главная страница — список товаров*/}
+            <Route path="/" element={<ProductList />} />
             {/* Путь для формы регистрации */}
-            <Route path="/" element={<RegisterForm />} />
+            <Route path="/register" element={<RegisterForm />} />
             {/* Путь для  формы авторизации */}
             <Route path="/login" element={<LoginForm />} />
             {/* Путь для личного кабинета */}
