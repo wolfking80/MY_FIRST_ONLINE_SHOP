@@ -52,8 +52,8 @@ class Order(Base):
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     # === СВЯЗИ ===
-    user: Mapped["User"] = relationship(back_populates="orders")
-    items: Mapped[List["OrderItem"]] = relationship(back_populates="order", cascade="all, delete-orphan")
+    user: Mapped["User"] = relationship("User", back_populates="orders")
+    items: Mapped[List["OrderItem"]] = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
 
     def calculate_total(self) -> Decimal:
         """
@@ -92,7 +92,7 @@ class OrderItem(Base):
     total_price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False) # price * quantity
     
     # === СВЯЗИ ===
-    order: Mapped["Order"] = relationship(back_populates="items")
+    order: Mapped["Order"] = relationship("Order", back_populates="items")
     product: Mapped["Product | None"] = relationship()
 
 

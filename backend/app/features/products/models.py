@@ -25,7 +25,7 @@ class Brand(Base):
     name: Mapped[str] = mapped_column(String(100), unique=True, index=True)
     slug: Mapped[str] = mapped_column(String(100), unique=True, index=True)
     logo_url: Mapped[str | None] = mapped_column(String(500))
-    products: Mapped[List["Product"]] = relationship(back_populates="brand")
+    products: Mapped[List["Product"]] = relationship("Product", back_populates="brand")
 
 # === КАТЕГОРИИ ===
 class Category(Base):
@@ -35,12 +35,14 @@ class Category(Base):
     slug: Mapped[str] = mapped_column(String(100), unique=True, index=True)
     parent_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id"))
     
-    products: Mapped[List["Product"]] = relationship(back_populates="category")
+    products: Mapped[List["Product"]] = relationship("Product", back_populates="category")
     subcategories: Mapped[List["Category"]] = relationship(
+        "Category", 
         back_populates="parent", 
         cascade="all, delete-orphan"
     )
     parent: Mapped["Category | None"] = relationship(
+        "Category", 
         back_populates="subcategories", 
         remote_side=[id],
         overlaps="subcategories"
@@ -76,12 +78,12 @@ class Product(Base):
     average_rating: Mapped[float] = mapped_column(Float, default=0.0)
     
     # Связи
-    brand: Mapped["Brand | None"] = relationship(back_populates="products")
-    category: Mapped["Category"] = relationship(back_populates="products")
-    variants: Mapped[List["ProductVariant"]] = relationship(back_populates="product", cascade="all, delete-orphan")
-    images: Mapped[List["ProductImage"]] = relationship(back_populates="product", cascade="all, delete-orphan")
-    reviews: Mapped[List["Review"]] = relationship(back_populates="product", cascade="all, delete-orphan")
-    favorited_by: Mapped[List["User"]] = relationship(secondary="favorites", back_populates="favorites")
+    brand: Mapped["Brand | None"] = relationship("Brand", back_populates="products")
+    category: Mapped["Category"] = relationship("Category", back_populates="products")
+    variants: Mapped[List["ProductVariant"]] = relationship("ProductVariant", back_populates="product", cascade="all, delete-orphan")
+    images: Mapped[List["ProductImage"]] = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan")
+    reviews: Mapped[List["Review"]] = relationship("Review", back_populates="product", cascade="all, delete-orphan")
+    favorited_by: Mapped[List["User"]] = relationship("User", secondary="favorites", back_populates="favorites")
 
 # === ВАРИАНТЫ (РАЗМЕРЫ/ЦВЕТА) ===
 class ProductVariant(Base):
@@ -93,7 +95,7 @@ class ProductVariant(Base):
     stock: Mapped[int] = mapped_column(default=0)
     characteristics: Mapped[dict] = mapped_column(JSON) # {"color": "black", "size": "XL"}
     
-    product: Mapped["Product"] = relationship(back_populates="variants")
+    product: Mapped["Product"] = relationship("Product", back_populates="variants")
 
 # === ИЗОБРАЖЕНИЯ ===
 class ProductImage(Base):
@@ -103,7 +105,7 @@ class ProductImage(Base):
     url: Mapped[str] = mapped_column(String(500))
     is_main: Mapped[bool] = mapped_column(default=False)
     
-    product: Mapped["Product"] = relationship(back_populates="images")
+    product: Mapped["Product"] = relationship("Product", back_populates="images")
 
 # === ОТЗЫВЫ ===
 class Review(Base):
@@ -118,5 +120,5 @@ class Review(Base):
     comment: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
-    product: Mapped["Product"] = relationship(back_populates="reviews")
-    user: Mapped["User"] = relationship(back_populates="reviews")
+    product: Mapped["Product"] = relationship("Product", back_populates="reviews")
+    user: Mapped["User"] = relationship("User", back_populates="reviews")

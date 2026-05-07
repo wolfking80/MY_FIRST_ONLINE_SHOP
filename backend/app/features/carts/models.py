@@ -22,9 +22,9 @@ class Cart(Base):
     onupdate=func.now()
 )
     
-    user: Mapped["User"] = relationship(back_populates="cart")
+    user: Mapped["User"] = relationship("User", back_populates="cart")
     
-    items: Mapped[List["CartItem"]] = relationship(back_populates="cart", cascade="all, delete-orphan")
+    items: Mapped[List["CartItem"]] = relationship("CartItem", back_populates="cart", cascade="all, delete-orphan")
 
 class CartItem(Base):
     __tablename__ = "cart_items"
@@ -44,4 +44,4 @@ class CartItem(Base):
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     
     # Связи
-    cart: Mapped["Cart"] = relationship(back_populates="items")
+    cart: Mapped["Cart"] = relationship("Cart", back_populates="items")

@@ -42,13 +42,13 @@ class User(Base):
 
     # === СВЯЗИ ===
     # Заказы
-    orders: Mapped[List["Order"]] = relationship(back_populates="user")
+    orders: Mapped[List["Order"]] = relationship("Order", back_populates="user")
     # Отзывы
-    reviews: Mapped[List["Review"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    reviews: Mapped[List["Review"]] = relationship("Review", back_populates="user", cascade="all, delete-orphan")
     # Избранное (Many-to-Many)
-    favorites: Mapped[List["Product"]] = relationship(secondary="favorites", back_populates="favorited_by")
+    favorites: Mapped[List["Product"]] = relationship("Product", secondary="favorites", back_populates="favorited_by")
     # Корзина
-    cart: Mapped["Cart"] = relationship(back_populates="user", uselist=False)
+    cart: Mapped["Cart"] = relationship("Cart", back_populates="user", uselist=False)
 
     @property
     def full_name(self) -> str:

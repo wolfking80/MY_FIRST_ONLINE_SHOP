@@ -31,7 +31,7 @@ class UserOut(UserBase):
     id: int
     created_at: datetime
     is_active: bool
-    is_superuser: bool
+    role: str
 
     # Учим Pydantic общаться с БД
     # По умолчанию Pydantic умеет читать данные только из словарей (data["name"]).

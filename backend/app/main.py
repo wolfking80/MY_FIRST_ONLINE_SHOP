@@ -1,10 +1,14 @@
+from app.features import all_models
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.features import all_models
+from sqlalchemy.orm import configure_mappers
 from app.features.products.router import router as products_router
 from app.features.users.router import router as users_router
 from app.features.users.auth import router as auth_router
 
+
+# Принудительно связываем все отношения по именам
+configure_mappers()
 
 
 app = FastAPI(title="MY ONLINE SHOP",
@@ -14,7 +18,7 @@ app = FastAPI(title="MY ONLINE SHOP",
                   {"name": "products", "description": "Products operations"}
               ])
 
-# Разрешаем React (порт 3000) обращаться к нам
+# Разрешаем React (порт 5137) обращаться к нам
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5137"],
@@ -25,7 +29,7 @@ app.add_middleware(
 
 # ПОДКЛЮЧАЕМ РОУТЕР
 # prefix="/users" значит, что все функции из users.py
-# будут доступны по адрксу http://127.0.0
+# будут доступны по адресу http://127.0.0.1:8000
 app.include_router(auth_router, prefix="/api/v1", tags=["auth"])
 app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
 # Подключаем каталог товаров

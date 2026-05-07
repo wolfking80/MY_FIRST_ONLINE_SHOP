@@ -22,7 +22,7 @@ export const Profile = () => {
   return (
     <div className="auth-container" style={{ maxWidth: '500px' }}>
       <h3>Личный кабинет</h3>
-      
+
       <div className="auth-form">
         <div className="profile-info-item">
           <span className="profile-label">Email</span>
@@ -42,8 +42,8 @@ export const Profile = () => {
         </div>
 
         <div className="status-badge-container">
-          <span className={`status-badge ${user.is_superuser ? 'status-admin' : 'status-user'}`}>
-            {user.is_superuser ? '💎 Администратор' : '👤 Покупатель'}
+          <span className={`status-badge ${user.role === 'admin' ? 'status-admin' : 'status-user'}`}>
+            {user.role === 'admin' ? '💎 Администратор' : '👤 Покупатель'}
           </span>
         </div>
 
