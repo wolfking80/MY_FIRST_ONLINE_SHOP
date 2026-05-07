@@ -39,6 +39,10 @@ async def create_user(db: AsyncSession, user: UserCreate) -> User:
 
   # Удаляем из этого словаря чистый пароль
   user_data.pop("password")
+  
+  # Если в форме не было username, используем email как никнейм
+  if not user_data.get("username"):
+    user_data["username"] = user_data["email"]
 
   # Создаем объект для записи в БД, распаковываем словарь
   # и добавляем зашифрованный пароль

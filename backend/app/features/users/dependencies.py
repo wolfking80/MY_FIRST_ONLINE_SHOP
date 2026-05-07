@@ -52,9 +52,18 @@ async def get_current_user(
   return user
 
 
-# Функция-фильтр для проверки статуса суперпользователя (администратора)
-async def check_admin(current_user: User = Depends(get_current_user)) -> User:
-  if not current_user.is_superuser:
+async def check_is_admin(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role != "admin": # Проверяем строго на админа
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Только администратор может выполнять это действие"
+        )
+    return current_user
+
+
+# Функция-фильтр для проверки статуса администратора или сотрудника
+async def check_is_staff(current_user: User = Depends(get_current_user)) -> User:
+  if current_user.role not in ["admin", "employee"]:
     raise HTTPException(
       status_code=status.HTTP_403_FORBIDDEN,
       detail="The user doesn't have enough privileges"
