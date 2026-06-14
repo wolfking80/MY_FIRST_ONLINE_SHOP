@@ -12,10 +12,10 @@ export const Header = ({ user, setUser }) => {
       await axios.post('http://localhost:8000/api/v1/auth/logout', {}, {
         withCredentials: true
       });
-      
+
       // Очищаем состояние в React
       setUser(null);
-      
+
       // Редиректим на страницу логина
       navigate('/login');
     } catch (err) {
@@ -29,10 +29,12 @@ export const Header = ({ user, setUser }) => {
     <header className="main-header">
       <Link to="/" className="logo">🛒 MY ONLINE-SHOP</Link>
       <div className="nav-right">
-        {/* Кнопка создания товара только для админа/сотрудника */}
+
+        {/* Кнопка входа в админку только для админа/сотрудника */}
         {(user?.role === 'admin' || user?.role === 'employee') && (
-          <Link to="/admin/add-product" className="admin-link">➕ Создать товар</Link>
+          <Link to="/admin" className="admin-link">⚙️ Админка</Link>
         )}
+
         {user ? (
           <div className="user-info">
             <span>👤 {user.username || user.email}</span>

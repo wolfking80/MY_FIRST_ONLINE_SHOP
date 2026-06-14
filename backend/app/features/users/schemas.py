@@ -22,11 +22,13 @@ class UserUpdate(BaseModel):
 # Это позволит пользователю поменять, например, только телефон, не присылая имя
     email: EmailStr | None = None
     password: str | None = None
-    username: str | None
+    username: str | None = None
     first_name: str | None = None
     last_name: str | None = None
     phone: str | None = None
-    city: str | None = None   
+    city: str | None = None
+    is_blocked: bool | None = None
+    role: str | None = None    
 
 
 # Что отдаем обратно в React
@@ -35,6 +37,7 @@ class UserOut(UserBase):
     created_at: datetime
     is_active: bool
     role: str
+    is_blocked: bool
     
     
 class UserShort(BaseModel):

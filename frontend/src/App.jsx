@@ -4,6 +4,7 @@ import axios from 'axios';
 
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
+import { AdminDashboard } from './features/admin/components/AdminDashboard';
 import { AddProductForm } from './features/admin/components/AddProductForm';
 import { ProductList } from './features/products/components/ProductList';
 import { Profile } from './features/users/components/Profile';
@@ -46,7 +47,7 @@ function App() {
             {/* Передаем setUser в LoginForm, чтобы он "запомнил" вход */}
             <Route path="/login" element={<LoginForm onLoginSuccess={setUser} />} />
             <Route path="/profile" element={<Profile user={user} />} />
-            <Route path="/admin/add-product" element={<AddProductForm />} />
+            <Route path="/admin/*" element={<AdminDashboard user={user} />} />
           </Routes>
         </main>
 

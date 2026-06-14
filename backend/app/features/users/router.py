@@ -49,7 +49,8 @@ async def get_user_by_id(user: User = Depends(get_valid_user_by_id)) -> User:
 async def partial_update_user(
    update_data: schemas.UserUpdate,
    user: User = Depends(get_valid_user_by_id),
-   db: AsyncSession=Depends(get_db)
+   db: AsyncSession=Depends(get_db),
+   _: User = Depends(check_is_admin)
    ) -> User:
    return await crud.perform_update(db, user, update_data, partial=True)
 
@@ -59,7 +60,8 @@ async def partial_update_user(
 async def full_update_user(
    update_data: schemas.UserUpdate,
    user: User = Depends(get_valid_user_by_id),
-   db: AsyncSession=Depends(get_db)
+   db: AsyncSession=Depends(get_db),
+   _: User = Depends(check_is_admin)
    ) -> User:
    return await crud.perform_update(db, user, update_data, partial=False)
    

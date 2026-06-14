@@ -43,3 +43,15 @@ export const getMe = async () => {
   const response = await apiClient.get('/users/me');
   return response.data;
 };
+
+// Обновить данные пользователя (роль, статус блокировки)
+export const updateUser = async (userId, updateData) => {
+  const response = await apiClient.patch(`/users/${userId}`, updateData);
+  return response.data;
+};
+
+// Полностью удалить пользователя по его ID
+export const deleteUser = async (userId) => {
+  const response = await apiClient.delete(`/users/${userId}`);
+  return response.data;
+};
