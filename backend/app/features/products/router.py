@@ -95,3 +95,16 @@ async def create_brand(name: str, slug: str, db: AsyncSession = Depends(get_db))
     await db.refresh(new_brand)
     return new_brand
 
+# Получить все категории (для выпадающего списка в React)
+@router.get("/categories", status_code=200)
+async def get_categories(db: AsyncSession = Depends(get_db)):
+    query = select(Category)
+    result = await db.execute(query)
+    return result.scalars().all()
+
+# Получить все бренды (для выпадающего списка в React)
+@router.get("/brands", status_code=200)
+async def get_brands(db: AsyncSession = Depends(get_db)):
+    query = select(Brand)
+    result = await db.execute(query)
+    return result.scalars().all()
