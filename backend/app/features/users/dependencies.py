@@ -49,6 +49,14 @@ async def get_current_user(
   if user is None:
     raise credentials_exception
   
+  if user.is_blocked:
+    raise HTTPException(
+      status_code=status.HTTP_403_FORBIDDEN,
+      detail="Ваш аккаунт заблокирован!"
+    )
+  
+  return user
+  
   return user
 
 

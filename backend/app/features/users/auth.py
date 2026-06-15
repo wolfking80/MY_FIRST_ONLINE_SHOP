@@ -17,10 +17,18 @@ async def login(
 ):
     user = await crud.get_user_by_email_or_phone(db, email=form_data.username, phone=None)
     
+    # Сначала проверяем, существует ли пользователь и верен ли пароль
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
+        )
+        
+    # Если пользователь заблокирован — выкидываем ошибку 403!
+    if user.is_blocked:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Ваш аккаунт заблокирован администратором!"
         )
 
     access_token = create_access_token(data={"sub": str(user.id)})
