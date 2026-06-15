@@ -36,3 +36,29 @@ export const createBrand = async (brandData) => {
   const response = await apiClient.post(`/products/brands?name=${encodeURIComponent(brandData.name)}&slug=${encodeURIComponent(brandData.slug)}`);
   return response.data;
 };
+
+
+// Получить вообще все товары для админки (включая неактивные и их варианты)
+export const getAdminProducts = async () => {
+  const response = await apiClient.get('/products/admin-all');
+  return response.data;
+};
+
+// Удалить товар по ID
+export const deleteProduct = async (productId) => {
+  const response = await apiClient.delete(`/products/delete/${productId}`);
+  return response.data;
+};
+
+// Редактировать товар и его варианты
+export const editProduct = async (productId, updatedPayload) => {
+  const data = new FormData();
+  // Упаковываем данные в JSON строку в поле product_data
+  data.append('product_data', JSON.stringify(updatedPayload));
+
+  // Явно передаем заголовок multipart/form-data, чтобы apiClient не запутался
+  const response = await apiClient.put(`/products/edit/${productId}`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};

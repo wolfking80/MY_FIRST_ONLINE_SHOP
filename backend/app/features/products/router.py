@@ -16,7 +16,7 @@ from app.features.products.models import (
 )
 from app.features.products.schemas import ProductShort
 from app.features.products.utils import save_product_image
-from app.features.users.dependencies import check_is_staff
+from app.features.users.dependencies import check_is_admin, check_is_staff
 from app.features.users.models import User
 
 router = APIRouter(tags=["Catalog"])
@@ -93,7 +93,7 @@ async def admin_add_product(
             status_code=400, detail=f"Неверный формат данных JSON: {str(e)}"
         )
 
-    # 1. Создаем базовый товар
+    # Создаем базовый товар
     slug = name.lower().replace(" ", "-") + "-" + str(uuid.uuid4())[:4]
     new_product = Product(
         name=name,
@@ -107,7 +107,7 @@ async def admin_add_product(
     db.add(new_product)
     await db.flush()  # Получаем id нового товара
 
-    # 2. Если админ не добавил ни одного варианта, создаем один дефолтный
+    # Если админ не добавил ни одного варианта, создаем один дефолтный
     if not variants_list:
         variants_list = [
             {
@@ -119,7 +119,7 @@ async def admin_add_product(
             }
         ]
 
-    # 3. Циклом создаем все пришедшие варианты в базу данных
+    # Циклом создаем все пришедшие варианты в базу данных
     for v in variants_list:
         # Если админ оставил цену варианта пустой, берем базовую цену товара
         v_price = float(v["price"]) if v.get("price") else base_price
@@ -142,7 +142,7 @@ async def admin_add_product(
         )
         db.add(new_variant)
 
-    # 4. Сохраняем картинки
+    # Сохраняем картинки
     for idx, file in enumerate(files):
         img_url = save_product_image(file)
         new_img = ProductImage(
@@ -192,3 +192,120 @@ async def get_brands(db: AsyncSession = Depends(get_db)):
     query = select(Brand)
     result = await db.execute(query)
     return result.scalars().all()
+
+
+# Получить абсолютно все товары (активные и неактивные) для админки
+@router.get("/admin-all", status_code=200)
+async def admin_get_all_products(
+    db: AsyncSession = Depends(get_db), admin: User = Depends(check_is_staff)
+):
+    query = (
+        select(Product)
+        .options(
+            joinedload(Product.brand),
+            joinedload(Product.images),
+            joinedload(Product.variants),  # Обязательно грузим варианты
+        )
+        .order_by(Product.id.desc())
+    )
+
+    result = await db.execute(query)
+    return result.unique().scalars().all()
+
+
+# Удалить товар и все его связи из БД
+@router.delete("/delete/{product_id}", status_code=200)
+async def admin_delete_product(
+    product_id: int,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(check_is_admin),  # Удалять может только админ!
+):
+    query = select(Product).where(Product.id == product_id)
+    result = await db.execute(query)
+    product = result.scalars().first()
+
+    if not product:
+        raise HTTPException(status_code=404, detail="Товар не найден")
+
+    await db.delete(product)
+    await db.commit()
+    return {"status": "success", "message": "Товар успешно удален"}
+
+
+# Полное редактирование товара и его вариантов (Принимаем JSON-строку)
+import json
+import uuid
+
+
+@router.put("/edit/{product_id}", status_code=200)
+async def admin_edit_product(
+    product_id: int,
+    product_data: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(check_is_staff),
+):
+    # Находим товар в базе
+    query = (
+        select(Product)
+        .options(joinedload(Product.variants))
+        .where(Product.id == product_id)
+    )
+    result = await db.execute(query)
+    product = result.scalars().first()
+
+    if not product:
+        raise HTTPException(status_code=404, detail="Товар не найден")
+
+    try:
+        raw_data = json.loads(product_data)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Неверный формат JSON")
+
+    # Принудительное приведение типов, чтобы избежать ошибок валидации Pydantic/SQLAlchemy
+    try:
+        product.name = str(raw_data["name"])
+        product.base_price = float(raw_data["base_price"])
+        product.category_id = int(raw_data["category_id"])
+        product.brand_id = (
+            int(raw_data["brand_id"]) if raw_data.get("brand_id") else None
+        )
+        product.description = raw_data.get("description", "")
+        product.is_active = bool(raw_data.get("is_active", True))
+    except (ValueError, TypeError) as e:
+        raise HTTPException(status_code=422, detail=f"Ошибка типов данных: {str(e)}")
+
+    # Очищаем старые варианты товара
+    for old_variant in product.variants:
+        await db.delete(old_variant)
+    await db.flush()
+
+    # Записываем новые измененные варианты
+    variants_list = raw_data.get("variants", [])
+    for v in variants_list:
+        try:
+            v_price = float(v["price"]) if v.get("price") else product.base_price
+            v_stock = int(v["stock"])
+        except (ValueError, TypeError):
+            v_price = product.base_price
+            v_stock = 0
+
+        v_sku = (
+            v["sku"]
+            if v.get("sku")
+            else f"SKU-{product.id}-{str(uuid.uuid4())[:4].upper()}"
+        )
+
+        new_variant = ProductVariant(
+            product_id=product.id,
+            sku=v_sku,
+            price=v_price,
+            stock=v_stock,
+            characteristics={
+                "color": v.get("color", "Standard"),
+                "size": v.get("size", "Standard"),
+            },
+        )
+        db.add(new_variant)
+
+    await db.commit()
+    return {"status": "success", "message": "Товар и варианты успешно обновлены"}

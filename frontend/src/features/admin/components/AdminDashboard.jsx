@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { UserManagement } from './UserManagement';
 import { CategoryBrandManagement } from './CategoryBrandManagement';
+import { ProductsManagement } from './ProductManagement.jsx';
 import { AddProductForm } from './AddProductForm';
 import './AdminDashboard.css';
 
@@ -67,12 +68,7 @@ export const AdminDashboard = ({ user }) => {
 
           {activeTab === 'add_product' && <AddProductForm />}
 
-          {activeTab === 'products_list' && (
-            <div>
-              <h3>Управление товарами</h3>
-              <p>Тут мы выведем таблицу всех товаров с кнопками [Редактировать количество], [Удалить], [Изменить цену].</p>
-            </div>
-          )}
+          {activeTab === 'products_list' && <ProductsManagement currentUser={user} />}
 
           {activeTab === 'categories_brands' && <CategoryBrandManagement />}
 
