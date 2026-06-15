@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { UserManagement } from './UserManagement';
+import { CategoryBrandManagement } from './CategoryBrandManagement';
 import { AddProductForm } from './AddProductForm';
-import './AdminDashboard.css'; // Импортируем нашу красоту!
+import './AdminDashboard.css';
 
 export const AdminDashboard = ({ user }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -73,12 +74,7 @@ export const AdminDashboard = ({ user }) => {
             </div>
           )}
 
-          {activeTab === 'categories_brands' && (
-            <div>
-              <h3>Категории и Бренды</h3>
-              <p>Тут мы сделаем формы для создания новых категорий и брендов, чтобы задействовать роуты POST /categories и POST /brands.</p>
-            </div>
-          )}
+          {activeTab === 'categories_brands' && <CategoryBrandManagement />}
 
           {activeTab === 'users' && <UserManagement currentUser={user} />}
         </div>
