@@ -60,6 +60,7 @@ export const ProductList = () => {
 
         {/* Выбор категории */}
         <select
+          className="modern-select"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
           style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', cursor: 'pointer' }}
@@ -72,6 +73,7 @@ export const ProductList = () => {
 
         {/* Выбор бренда */}
         <select
+          className="modern-select"
           value={selectedBrand}
           onChange={(e) => setSelectedBrand(e.target.value)}
           style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', cursor: 'pointer' }}

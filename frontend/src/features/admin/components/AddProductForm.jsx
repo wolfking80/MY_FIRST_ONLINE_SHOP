@@ -8,7 +8,8 @@ export const AddProductForm = () => {
     base_price: '',
     category_id: '',
     brand_id: '',
-    description: ''
+    description: '',
+    is_active: true // ДОБАВИЛИ в стейт значение по умолчанию
   });
   const [files, setFiles] = useState([]);
 
@@ -32,7 +33,12 @@ export const AddProductForm = () => {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    // Если тип инпута checkbox, то берем true/false из checked, иначе обычное value
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : value
+    });
   };
 
   const handleFileChange = (e) => {
@@ -58,7 +64,7 @@ export const AddProductForm = () => {
       alert('Товар успешно добавлен!');
 
       // Очистка формы после успеха
-      setFormData({ name: '', base_price: '', category_id: '', brand_id: '', description: '' });
+      setFormData({ name: '', base_price: '', category_id: '', brand_id: '', description: '', is_active: true });
       setFiles([]);
       e.target.reset(); // Сбросить поле выбора файлов
 
@@ -81,7 +87,7 @@ export const AddProductForm = () => {
           value={formData.category_id}
           onChange={handleChange}
           required
-          style={{ padding: '10px', margin: '5px 0', borderRadius: '4px', width: '100%', boxSizing: 'border-box' }}
+          className="modern-select"
         >
           <option value="">-- Выберите категорию --</option>
           {categories.map(cat => (
@@ -97,7 +103,7 @@ export const AddProductForm = () => {
           value={formData.brand_id}
           onChange={handleChange}
           required
-          style={{ padding: '10px', margin: '5px 0', borderRadius: '4px', width: '100%', boxSizing: 'border-box' }}
+          className="modern-select"
         >
           <option value="">-- Выберите бренд --</option>
           {brands.map(brand => (
@@ -108,6 +114,22 @@ export const AddProductForm = () => {
         </select>
 
         <textarea name="description" value={formData.description} placeholder="Описание" onChange={handleChange} style={{ padding: '10px', borderRadius: '4px' }} />
+
+        {/* ПАНЕЛЬ ЧЕКБОКСА */}
+        <div className="checkbox-container" onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}>
+          <input
+            type="checkbox"
+            name="is_active"
+            id="is_active"
+            checked={formData.is_active}
+            onChange={handleChange}
+            className="modern-checkbox"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <label htmlFor="is_active" className="checkbox-label">
+            Сразу активировать товар (показывать в каталоге)
+          </label>
+        </div>
 
         <div style={{ margin: '10px 0' }}>
           <label>Картинки товара:</label>

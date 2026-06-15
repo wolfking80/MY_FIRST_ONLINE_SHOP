@@ -85,3 +85,45 @@
 .add-to-cart-btn:active {
     transform: scale(0.98);
 }
+
+
+/* Единый современный стиль для всех выпадающих списков */
+.modern-select {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #111827;
+  background-color: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  appearance: none; /* Убираем стандартную стрелку браузера */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://w3.org' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 16px;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.modern-select:focus {
+  outline: none;
+  border-color: #4e73df;
+  box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.15);
+}
+
+.modern-select:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Для фильтров на главной странице (чтобы они не были на всю ширину) */
+.filters-panel .modern-select {
+  width: auto;
+  min-width: 200px;
+  padding: 8px 36px 8px 12px;
+  background-position: right 12px center;
+  font-size: 14px;
+}

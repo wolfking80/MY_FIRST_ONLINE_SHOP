@@ -271,3 +271,37 @@
     box-shadow: 0 0 0 0 rgba(231, 74, 59, 0);
   }
 }
+
+/* Стильный свитч-переключатель для чекбокса активности */
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background-color: #f8f9fa;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 5px 0;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.checkbox-container:hover {
+  background-color: #f1f3f9;
+}
+
+/* Сам квадрат чекбокса делаем большим и заметным */
+.modern-checkbox {
+  width: 22px !important; /* Перебиваем глобальные стили, если они сжимали инпут */
+  height: 22px !important;
+  cursor: pointer;
+  accent-color: #4e73df; /* Задает фирменный синий цвет галочке в современных браузерах */
+}
+
+.checkbox-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #3a3b45;
+  cursor: pointer;
+}
