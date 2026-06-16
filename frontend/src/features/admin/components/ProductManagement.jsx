@@ -131,34 +131,43 @@ export const ProductsManagement = ({ currentUser }) => {
             <th>Название товара</th>
             <th>Базовая цена</th>
             <th>Бренд</th>
+            <th>Всего на складе</th>
             <th>Статус</th>
             <th className="actions-cell">Действия</th>
           </tr>
         </thead>
         <tbody>
-          {products.map((p) => (
-            <tr key={p.id} className={!p.is_active ? 'blocked-user-row' : ''}>
-              <td>{p.id}</td>
-              <td className="user-name-cell">{p.name}</td>
-              <td>{Number(p.base_price).toLocaleString()} ₽</td>
-              <td>{p.brand?.name || <span style={{ color: '#aaa' }}>Нет бренда</span>}</td>
-              <td>
-                {p.is_active ? (
-                  <span className="status-badge active">Активен</span>
-                ) : (
-                  <span className="status-badge blocked">Скрыт</span>
-                )}
-              </td>
-              <td className="actions-cell">
-                <button onClick={() => openEditModal(p)} className="btn-action btn-block" style={{ backgroundColor: '#4e73df', border: '1px solid #2e59d9', color: '#fff' }}>
-                  ✏️ Редактировать
-                </button>
-                <button onClick={() => handleDelete(p.id, p.name)} disabled={!isAdmin} className="btn-action btn-delete">
-                  🗑️ Удалить
-                </button>
-              </td>
-            </tr>
-          ))}
+          {products.map((p) => {
+            const totalStock = p.variants ? p.variants.reduce((sum, v) => sum + parseInt(v.stock || 0, 10), 0) : 0;
+
+            return (
+              <tr key={p.id} className={!p.is_active ? 'blocked-user-row' : ''}>
+                <td>{p.id}</td>
+                <td className="user-name-cell">{p.name}</td>
+
+                <td className="product-price-cell">{Number(p.base_price).toLocaleString()} ₽</td>
+                <td className="product-brand-cell">{p.brand?.name || <span className="no-brand">Без бренда</span>}</td>
+
+                <td className="product-stock-cell"><strong>{totalStock}</strong> шт.</td>
+
+                <td>
+                  {p.is_active ? (
+                    <span className="status-badge active">Активен</span>
+                  ) : (
+                    <span className="status-badge blocked">Скрыт</span>
+                  )}
+                </td>
+                <td className="actions-cell">
+                  <button onClick={() => openEditModal(p)} className="btn-action btn-block" style={{ backgroundColor: '#4e73df', border: '1px solid #2e59d9', color: '#fff' }}>
+                    ✏️ Редактировать
+                  </button>
+                  <button onClick={() => handleDelete(p.id, p.name)} disabled={!isAdmin} className="btn-action btn-delete">
+                    🗑️ Удалить
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
