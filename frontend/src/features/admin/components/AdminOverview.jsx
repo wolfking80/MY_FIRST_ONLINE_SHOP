@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { getAdminProducts } from '../../products/api';
 import { getAllUsers } from '../../users/api';
+import { getOrdersStats } from '../../orders/api';
 
 export const AdminOverview = ({ currentUser }) => {
   const [stats, setStats] = useState({
-    totalRevenue: 154200, // Пример статичных данных для заказов, пока нет модуля оплаты
-    pendingOrders: 3,     // Пример
+    totalRevenue: 0,
+    pendingOrders: 0,
     totalUsers: 0,
     outOfStockProducts: 0
   });
@@ -15,9 +16,13 @@ export const AdminOverview = ({ currentUser }) => {
     const fetchOverviewStats = async () => {
       try {
         setLoading(true);
-        // Запрашиваем реальные данные пользователей и товаров из БД
-        const users = await getAllUsers();
-        const products = await getAdminProducts();
+
+        // Запускаем все три запроса параллельно к базе данных
+        const [users, products, orderStats] = await Promise.all([
+          getAllUsers(),
+          getAdminProducts(),
+          getOrdersStats()
+        ]);
 
         // Считаем дефицитные товары (где общие остатки по всем размерам = 0)
         const zeroStockCount = products.filter(p => {
@@ -25,11 +30,14 @@ export const AdminOverview = ({ currentUser }) => {
           return totalStock === 0;
         }).length;
 
-        setStats(prev => ({
-          ...prev,
+        // Записываем ВСЕ реальные данные, пришедшие из PostgreSQL
+        setStats({
+          totalRevenue: orderStats.total_revenue,
+          pendingOrders: orderStats.pending_orders,
           totalUsers: users.length,
           outOfStockProducts: zeroStockCount
-        }));
+        });
+
       } catch (err) {
         console.error("Ошибка при сборке статистики:", err);
       } finally {
@@ -89,10 +97,10 @@ export const AdminOverview = ({ currentUser }) => {
 
       </div>
 
-      <div style={{ marginTop: '40px', padding: '20px', background: '#f8f9fa', borderRadius: '8px', border: '1px dashed #ccc' }}>
+      <div className="quick-actions-box">
         <h4>💡 Быстрые действия для администратора:</h4>
-        <p style={{ fontSize: '14px', color: '#4b5563', lineHeight: '1.6' }}>
-          • Если в карточке <span style={{ color: '#e74a3b', fontWeight: 'bold' }}>Закончился товар</span> цифра больше нуля — перейдите во вкладку <strong>«Управление товарами»</strong> и обновите остатки на складе.<br />
+        <p>
+          • Если в карточке <span style={{ color: '#c53030', fontWeight: '700' }}>Закончился товар</span> цифра больше нуля — перейдите во вкладку <strong>«Управление товарами»</strong> и обновите остатки на складе.<br />
           • Чтобы расширить ассортимент, используйте вкладки создания категорий, брендов и карточек товаров.
         </p>
       </div>

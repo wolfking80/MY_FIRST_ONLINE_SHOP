@@ -442,3 +442,30 @@
   font-size: 32px;
   opacity: 0.3;
 }
+
+/* --- Блок быстрых действий --- */
+.quick-actions-box {
+  margin-top: 40px;
+  padding: 24px;
+  background-color: #eaedf7 !important;
+  border-radius: 10px;
+  border: 2px solid #d1d7eb !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+}
+
+.quick-actions-box h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #1e3a8a !important;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.quick-actions-box p {
+  font-size: 15px !important;
+  color: #111827 !important;
+  line-height: 1.6;
+  font-weight: 500;
+  margin: 0;
+}
+
