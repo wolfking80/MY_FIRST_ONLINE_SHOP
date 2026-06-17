@@ -4,6 +4,7 @@ import { UserManagement } from './UserManagement';
 import { CategoryBrandManagement } from './CategoryBrandManagement';
 import { ProductsManagement } from './ProductManagement.jsx';
 import { AddProductForm } from './AddProductForm';
+import { AdminOverview } from './AdminOverview.jsx';
 import './AdminDashboard.css';
 
 export const AdminDashboard = ({ user }) => {
@@ -59,12 +60,7 @@ export const AdminDashboard = ({ user }) => {
       {/* ОСНОВНОЙ КОНТЕНТ В ЗАВИСИМОСТИ ОТ ВКЛАДКИ */}
       <main className="admin-content">
         <div className="admin-card">
-          {activeTab === 'overview' && (
-            <div>
-              <h3>Добро пожаловать, {user.username}!</h3>
-              <p>Здесь будет отображаться общая статистика: количество заказов, новые пользователи и актуальные остатки товаров на складе.</p>
-            </div>
-          )}
+          {activeTab === 'overview' && <AdminOverview currentUser={user} />}
 
           {activeTab === 'add_product' && <AddProductForm />}
 
