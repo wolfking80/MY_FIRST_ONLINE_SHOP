@@ -1,4 +1,4 @@
-from fastapi import Depends
+from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.features.orders.models import Order
@@ -7,6 +7,7 @@ from app.features.products import router
 from app.features.users.dependencies import check_is_staff
 from app.features.users.models import User
 
+router = APIRouter(prefix="/orders", tags=["Orders"])
 
 @router.get("/orders-stats", status_code=200)
 async def get_admin_orders_stats(

@@ -7,6 +7,11 @@ export const ProductsManagement = ({ currentUser }) => {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // СТЕЙТЫ ДЛЯ ФИЛЬТРАЦИИ И СОРТИРОВКИ ТАБЛИЦЫ
+  const [filterStock, setFilterStock] = useState('all'); // all, in_stock, out_of_stock
+  const [filterCategory, setFilterCategory] = useState('all'); // id категории или all
+  const [sortByDate, setSortByDate] = useState('desc'); // desc (новые), asc (старые)
+
   // Стейты для модального окна редактирования
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -99,11 +104,9 @@ export const ProductsManagement = ({ currentUser }) => {
       await editProduct(editingId, payload);
       alert('Товар и все изменения вариантов успешно обновлены!');
       setIsModalOpen(false);
-      loadData(); // Перезагружаем таблицу свежими данными
+      loadData();
     } catch (err) {
       console.error("Полная ошибка бэкенда:", err.response?.data);
-
-      // Разворачиваем ошибку бэкенда, если она пришла объектом
       let errorText = err.message;
       if (err.response?.data?.detail) {
         if (Array.isArray(err.response.data.detail)) {
@@ -116,61 +119,147 @@ export const ProductsManagement = ({ currentUser }) => {
     }
   };
 
+  // --- ЛОГИКА ФИЛЬТРАЦИИ И СОРТИРОВКИ НА ФРОНТЕНДЕ ---
+  const getFilteredAndSortedProducts = () => {
+    let result = [...products];
+
+    // Фильтр по остаткам
+    if (filterStock === 'in_stock') {
+      result = result.filter(p => {
+        const total = p.variants ? p.variants.reduce((sum, v) => sum + parseInt(v.stock || 0, 10), 0) : 0;
+        return total > 0;
+      });
+    } else if (filterStock === 'out_of_stock') {
+      result = result.filter(p => {
+        const total = p.variants ? p.variants.reduce((sum, v) => sum + parseInt(v.stock || 0, 10), 0) : 0;
+        return total === 0;
+      });
+    }
+
+    // Фильтр по категории
+    if (filterCategory !== 'all') {
+      result = result.filter(p => p.category_id === parseInt(filterCategory, 10));
+    }
+
+    // Сортировка по дате добавления (используем ID)
+    result.sort((a, b) => {
+      if (sortByDate === 'desc') {
+        return b.id - a.id;
+      } else {
+        return a.id - b.id;
+      }
+    });
+
+    return result;
+  };
 
   if (loading) return <div>Загрузка списка товаров...</div>;
+
+  const filteredProducts = getFilteredAndSortedProducts();
 
   return (
     <div className="products-management-panel">
       <h3>📝 Управление товарами</h3>
       <p className="sub-info">Всего в базе данных: <strong>{products.length}</strong> позиций</p>
 
-      <table className="users-table-container">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Название товара</th>
-            <th>Базовая цена</th>
-            <th>Бренд</th>
-            <th>Всего на складе</th>
-            <th>Статус</th>
-            <th className="actions-cell">Действия</th>
-          </tr>
-        </thead>
-        <tbody>
-          {products.map((p) => {
-            const totalStock = p.variants ? p.variants.reduce((sum, v) => sum + parseInt(v.stock || 0, 10), 0) : 0;
+      {/* --- БЛОК ФИЛЬТРОВ И СОРТИРОВКИ --- */}
+      <div className="table-filters-bar" style={{ display: 'flex', gap: '15px', marginBottom: '20px', flexWrap: 'wrap', background: '#f8f9fa', padding: '15px', borderRadius: '8px', border: '1px solid #e3e6f0' }}>
 
-            return (
-              <tr key={p.id} className={!p.is_active ? 'blocked-user-row' : ''}>
-                <td>{p.id}</td>
-                <td className="user-name-cell">{p.name}</td>
+        {/* Фильтр по остаткам */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <label style={{ fontSize: '12px', fontWeight: '700', color: '#4e73df', textTransform: 'uppercase' }}>Остатки на складе:</label>
+          <select value={filterStock} onChange={(e) => setFilterStock(e.target.value)} className="modern-select" style={{ minWidth: '180px', padding: '8px' }}>
+            <option value="all">Все товары</option>
+            <option value="in_stock">Только в наличии</option>
+            <option value="out_of_stock">⚠️ Закончились (0 шт.)</option>
+          </select>
+        </div>
 
-                <td className="product-price-cell">{Number(p.base_price).toLocaleString()} ₽</td>
-                <td className="product-brand-cell">{p.brand?.name || <span className="no-brand">Без бренда</span>}</td>
+        {/* Фильтр по категории */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <label style={{ fontSize: '12px', fontWeight: '700', color: '#4e73df', textTransform: 'uppercase' }}>Категория:</label>
+          <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="modern-select" style={{ minWidth: '180px', padding: '8px' }}>
+            <option value="all">Все категории</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
+        </div>
 
-                <td className="product-stock-cell"><strong>{totalStock}</strong> шт.</td>
+        {/* Сортировка по дате */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <label style={{ fontSize: '12px', fontWeight: '700', color: '#4e73df', textTransform: 'uppercase' }}>Дата создания:</label>
+          <select value={sortByDate} onChange={(e) => setSortByDate(e.target.value)} className="modern-select" style={{ minWidth: '180px', padding: '8px' }}>
+            <option value="desc">Сначала новые</option>
+            <option value="asc">Сначала старые</option>
+          </select>
+        </div>
 
-                <td>
-                  {p.is_active ? (
-                    <span className="status-badge active">Активен</span>
-                  ) : (
-                    <span className="status-badge blocked">Скрыт</span>
-                  )}
-                </td>
-                <td className="actions-cell">
-                  <button onClick={() => openEditModal(p)} className="btn-action btn-block" style={{ backgroundColor: '#4e73df', border: '1px solid #2e59d9', color: '#fff' }}>
-                    ✏️ Редактировать
-                  </button>
-                  <button onClick={() => handleDelete(p.id, p.name)} disabled={!isAdmin} className="btn-action btn-delete">
-                    🗑️ Удалить
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+        {/* Кнопка сброса */}
+        {(filterStock !== 'all' || filterCategory !== 'all' || sortByDate !== 'desc') && (
+          <button
+            onClick={() => { setFilterStock('all'); setFilterCategory('all'); setSortByDate('desc'); }}
+            style={{ alignSelf: 'flex-end', padding: '10px 16px', background: '#e74a3b', color: 'white', border: 'none', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', height: '40px' }}
+          >
+            Сбросить фильтры
+          </button>
+        )}
+      </div>
 
+      {/* ТАБЛИЦА ВСЕХ ТОВАРОВ */}
+      {filteredProducts.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '30px', color: '#858796', background: '#fff', borderRadius: '8px', border: '1px solid #e3e6f0' }}>
+          Товары с выбранными фильтрами не найдены 😔
+        </div>
+      ) : (
+        <table className="users-table-container">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Название товара</th>
+              <th>Базовая цена</th>
+              <th>Бренд</th>
+              <th>Всего на складе</th>
+              <th>Статус</th>
+              <th className="actions-cell">Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredProducts.map((p) => {
+              const totalStock = p.variants ? p.variants.reduce((sum, v) => sum + parseInt(v.stock || 0, 10), 0) : 0;
+
+              return (
+                <tr key={p.id} className={!p.is_active ? 'blocked-user-row' : ''}>
+                  <td>{p.id}</td>
+                  <td className="user-name-cell">{p.name}</td>
+                  <td className="product-price-cell">{Number(p.base_price).toLocaleString()} ₽</td>
+                  <td className="product-brand-cell">{p.brand?.name || <span className="no-brand">Без бренда</span>}</td>
+                  <td className="product-stock-cell" style={{ color: totalStock === 0 ? '#e74a3b' : '#000' }}>
+                    <strong>{totalStock}</strong> шт.
+                  </td>
+                  <td>
+                    {p.is_active ? (
+                      <span className="status-badge active">Активен</span>
+                    ) : (
+                      <span className="status-badge blocked">Скрыт</span>
+                    )}
+                  </td>
+                  <td className="actions-cell">
+                    <button onClick={() => openEditModal(p)} className="btn-action btn-block" style={{ backgroundColor: '#4e73df', border: '1px solid #2e59d9', color: '#fff' }}>
+                      ✏️ Редактировать
+                    </button>
+                    <button onClick={() => handleDelete(p.id, p.name)} disabled={!isAdmin} className="btn-action btn-delete">
+                      🗑️ Удалить
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+
+      {/* МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ */}
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -203,6 +292,7 @@ export const ProductsManagement = ({ currentUser }) => {
                 <label className="checkbox-label">Показывать товар в каталоге</label>
               </div>
 
+              {/* ДИНАМИЧЕСКИЕ ВАРИАНТЫ (РАЗМЕРЫ И КОЛИЧЕСТВО) */}
               <div style={{ marginTop: '15px', padding: '12px', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#fcfcfc' }}>
                 <h4 style={{ margin: '0 0 10px 0', color: '#4e73df' }}>📐 Размеры, цвета и остатки на складе</h4>
                 {editVariants.map((v, index) => (
