@@ -1,8 +1,9 @@
-from decimal import Decimal 
+from decimal import Decimal
 import uuid
 
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from pydantic import BaseModel, Field
 from slugify import slugify
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
@@ -20,7 +21,11 @@ from app.features.products.models import (
 )
 from app.features.products.schemas import ProductShort
 from app.features.products.utils import save_product_image
-from app.features.users.dependencies import check_is_admin, check_is_staff, get_current_user
+from app.features.users.dependencies import (
+    check_is_admin,
+    check_is_staff,
+    get_current_user,
+)
 from app.features.users.models import User
 from app.features.orders.models import Order, OrderItem
 
@@ -50,14 +55,19 @@ async def get_products(
     query = query.offset(skip).limit(limit)
 
     result = await db.execute(query)
+    
     # unique() обязателен, когда используем joinedload с коллекциями (картинками)
     products = result.unique().scalars().all()
+    
+    for prod in products:
+        # Считаем среднее значение рейтинга напрямую из таблицы отзывов
+        rating_stmt = select(func.avg(Review.rating)).where(Review.product_id == prod.id)
+        rating_res = await db.execute(rating_stmt)
+        avg_score = rating_res.scalar()
+        
+        prod.average_rating = float(avg_score) if avg_score is not None else 0.0
 
     return products
-
-
-import json
-from pydantic import BaseModel, Field
 
 
 # Создаем мини-схему для валидации входящих вариантов прямо внутри JSON
@@ -277,7 +287,7 @@ async def admin_edit_product(
         product.description = raw_data.get("description", "")
         product.is_active = bool(raw_data.get("is_active", True))
         product.slug = slugify(product.name) + "-" + str(uuid.uuid4())[:4]
-        
+
     except (ValueError, TypeError) as e:
         raise HTTPException(status_code=422, detail=f"Ошибка типов данных: {str(e)}")
 
@@ -319,41 +329,53 @@ async def admin_edit_product(
 
 
 @router.get("/details/{slug}", status_code=200)
-async def get_product_details_by_slug(
-    slug: str,
-    db: AsyncSession = Depends(get_db)
-):
+async def get_product_details_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
     # Принудительно ищем в нижнем регистре, чтобы исключить любые несовпадения
-    query = select(Product).options(
-        joinedload(Product.brand),
-        joinedload(Product.category),
-        selectinload(Product.images),
-        selectinload(Product.variants),
-        selectinload(Product.reviews).joinedload(Review.user)
-    ).where(func.lower(Product.slug) == slug.lower())
-    
+    query = (
+        select(Product)
+        .options(
+            joinedload(Product.brand),
+            joinedload(Product.category),
+            selectinload(Product.images),
+            selectinload(Product.variants),
+            selectinload(Product.reviews).joinedload(Review.user),
+        )
+        .where(func.lower(Product.slug) == slug.lower())
+    )
+
     result = await db.execute(query)
     product = result.scalars().first()
-    
+
     if not product:
         raise HTTPException(status_code=404, detail="Товар не найден")
-        
-    return product
 
+    if product:
+        # Считаем среднее значение рейтинга для этого товара напрямую из таблицы отзывов
+        rating_stmt = select(func.avg(Review.rating)).where(
+            Review.product_id == product.id
+        )
+        rating_res = await db.execute(rating_stmt)
+        avg_score = rating_res.scalar()
+
+        # Перезаписываем виртуальное поле для фронтенда (если отзывов нет — ставим 0.0)
+        product.average_rating = float(avg_score) if avg_score is not None else 0.0
+
+    return product
 
 
 # Схема валидации нового отзыва
 class ReviewCreateInput(BaseModel):
     product_id: int
-    rating: int = Field(..., ge=1, le=5) # Оценка строго от 1 до 5
+    rating: int = Field(..., ge=1, le=5)  # Оценка строго от 1 до 5
     text: str = Field(..., min_length=2)
+
 
 # Проверить, имеет ли право пользователь оставить отзыв
 @router.get("/check-review-eligibility/{product_id}", status_code=200)
 async def check_review_eligibility(
     product_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     # Ищем успешный доставленный заказ этого юзера, где лежал данный товар
     query = (
@@ -361,44 +383,75 @@ async def check_review_eligibility(
         .join(OrderItem)
         .where(
             Order.user_id == current_user.id,
-            Order.status == "delivered", # Товар должен быть доставлен!
-            OrderItem.product_id == product_id
+            Order.status == "delivered",  # Товар должен быть доставлен!
+            OrderItem.product_id == product_id,
         )
     )
     result = await db.execute(query)
     order = result.scalars().first()
-    
+
     # Также проверим, не оставлял ли он отзыв ранее (один товар - один отзыв)
-    already_reviewed = select(Review).where(Review.product_id == product_id, Review.user_id == current_user.id)
+    already_reviewed = select(Review).where(
+        Review.product_id == product_id, Review.user_id == current_user.id
+    )
     review_result = await db.execute(already_reviewed)
-    
+
     return {
         "eligible": order is not None,
-        "already_reviewed": review_result.scalars().first() is not None
+        "already_reviewed": review_result.scalars().first() is not None,
     }
+
 
 # Опубликовать новый отзыв
 @router.post("/reviews/add", status_code=201)
 async def add_product_review(
     payload: ReviewCreateInput,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     # Проверка безопасности на сервере
-    check_query = select(Order).join(OrderItem).where(
-        Order.user_id == current_user.id, Order.status == "delivered", OrderItem.product_id == payload.product_id
+    check_query = (
+        select(Order)
+        .join(OrderItem)
+        .where(
+            Order.user_id == current_user.id,
+            Order.status == "delivered",
+            OrderItem.product_id == payload.product_id,
+        )
     )
     check_result = await db.execute(check_query)
     if not check_result.scalars().first():
-        raise HTTPException(status_code=403, detail="Вы можете оставить отзыв только после получения товара!")
+        raise HTTPException(
+            status_code=403,
+            detail="Вы можете оставить отзыв только после получения товара!",
+        )
 
     new_review = Review(
         product_id=payload.product_id,
         user_id=current_user.id,
         rating=payload.rating,
-        text=payload.text
+        comment=payload.text,
     )
     db.add(new_review)
+    await db.flush()  # Сохраняем отзыв в текущей сессии, чтобы учесть его в расчете
+
+    # АВТОМАТИЧЕСКИЙ ПЕРЕСЧЕТ РЕЙТИНГА ТОВАРА В БАЗЕ ДАННЫХ
+    # Находим все отзывы этого товара
+    rating_query = select(Review.rating).where(Review.product_id == payload.product_id)
+    rating_result = await db.execute(rating_query)
+    all_ratings = rating_result.scalars().all()
+
+    if all_ratings:
+        # Считаем среднее арифметическое оценок
+        avg_rating = sum(all_ratings) / len(all_ratings)
+
+        # Находим сам товар и обновляем его колонку average_rating
+        product_query = select(Product).where(Product.id == payload.product_id)
+        prod_result = await db.execute(product_query)
+        db_product = prod_result.scalars().first()
+
+        if db_product:
+            db_product.average_rating = float(avg_rating)  # Записали свежий рейтинг!
+
     await db.commit()
     return {"status": "success", "message": "Отзыв успешно опубликован!"}
-

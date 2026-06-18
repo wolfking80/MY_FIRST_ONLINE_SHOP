@@ -146,12 +146,12 @@ export const ProductList = () => {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '13px', color: '#f59e0b', marginBottom: '6px' }}>
                   {/* Закрашенные звезды (если рейтинга нет — будет 0) */}
-                  {'★'.repeat(product.average_rating ? Math.round(product.average_rating) : 0)}
+                  {'★'.repeat(product.average_rating ? Math.round(parseFloat(product.average_rating)) : 0)}
                   {/* Серые контуры звезд */}
-                  {'☆'.repeat(5 - (product.average_rating ? Math.round(product.average_rating) : 0))}
+                  {'☆'.repeat(5 - (product.average_rating ? Math.round(parseFloat(product.average_rating)) : 0))}
                   {/* Количество отзывов */}
                   <span style={{ color: '#858796', fontSize: '11px', marginLeft: '4px' }}>
-                    ({product.reviews?.length || 0})
+                    ({product.average_rating > 0 ? 1 : 0})
                   </span>
                 </div>
 

@@ -12,6 +12,7 @@ export const ProductDetailsPage = () => {
   const [activeImgIndex, setActiveImgIndex] = useState(0);
   const [selectedVariantId, setSelectedVariantId] = useState('');
 
+  // Стейты для логики отзывов
   const [eligibility, setEligibility] = useState({ eligible: false, already_reviewed: false });
   const [newRating, setNewRating] = useState(5);
   const [newCommentText, setNewCommentText] = useState('');
@@ -32,7 +33,7 @@ export const ProductDetailsPage = () => {
 
         if (data.variants && data.variants.length > 0) {
           const firstInStock = data.variants.find(v => parseInt(v.stock, 10) > 0);
-          setSelectedVariantId(firstInStock ? firstInStock.id : data.variants[0].id);
+          setSelectedVariantId(firstInStock ? firstInStock.id : data.variants.id);
         }
       } catch (err) {
         console.error("Ошибка загрузки деталей товара:", err);
@@ -64,16 +65,43 @@ export const ProductDetailsPage = () => {
     e.preventDefault();
     if (!newCommentText.trim()) return;
     try {
+      // Отправляем отзыв в базу данных PostgreSQL
       await addProductReview(product.id, newRating, newCommentText);
-      alert("🎉 Спасибо за отзыв!");
-      setNewCommentText('');
-      loadDetails(); // Перезагрузка для вывода отзыва
+      alert("🎉 Спасибо за отзыв! Он успешно опубликован.");
+
+      // Моделируем новый отзыв локально для мгновенного отображения на экране
+      const mockNewReview = {
+        id: Date.now(), // Временный уникальный ID для React-цикла key
+        rating: newRating,
+        comment: newCommentText,
+        created_at: new Date().toISOString(),
+        user: {
+          username: "Вы" // Красивая подпись автора в реальном времени
+        }
+      };
+
+      // Обновляем стейт товара: пушим отзыв в массив и пересчитываем средний балл
+      const updatedReviews = product.reviews ? [...product.reviews, mockNewReview] : [mockNewReview];
+      const sumRatings = updatedReviews.reduce((sum, r) => sum + parseInt(r.rating, 10), 0);
+      const newAverage = sumRatings / updatedReviews.length;
+
+      setProduct({
+        ...product,
+        reviews: updatedReviews,
+        average_rating: newAverage
+      });
+
+      // Закрываем форму, переводя стейт в режим "уже оставлен"
+      setEligibility({
+        ...eligibility,
+        already_reviewed: true
+      });
+
+      setNewCommentText(''); // Очищаем поле ввода
     } catch (err) {
-      alert("Ошибка: " + (err.response?.data?.detail || err.message));
+      alert("Ошибка публикации: " + (err.response?.data?.detail || err.message));
     }
   };
-
-  if (loading) return <div style={{ padding: '50px', textAlign: 'center', fontWeight: '600' }}>Загрузка карточки товара...</div>;
 
   if (loading) return <div style={{ padding: '50px', textAlign: 'center', fontWeight: '600' }}>Загрузка карточки товара...</div>;
   if (!product) return <div style={{ padding: '50px', textAlign: 'center' }}>Товар не найден 😔</div>;
@@ -82,102 +110,70 @@ export const ProductDetailsPage = () => {
   const currentStock = currentVariant ? parseInt(currentVariant.stock, 10) : 0;
 
   return (
-    <div className="details-page-container">
+    <div>
+      {/* ОСНОВНАЯ КАРТОЧКА ТОВАРА */}
+      <div className="details-page-container">
 
-      {/* ЛЕВАЯ КОЛОНКА: ГАЛЕРЕЯ КАРТИНОК */}
-      <div>
-        <div className="details-main-image-box">
-          <img
-            src={product.images && product.images.length > 0 ? `http://localhost:8000${product.images[activeImgIndex]?.url}` : 'https://placeholder.com'}
-            alt={product.name}
-            className="details-main-image"
-          />
-        </div>
-
-        {product.images && product.images.length > 1 && (
-          <div className="details-thumbnails-list">
-            {product.images.map((img, index) => (
-              <img
-                key={img.id}
-                src={`http://localhost:8000${img.url}`}
-                alt="Превью"
-                onClick={() => setActiveImgIndex(index)}
-                className={`details-thumbnail-img ${activeImgIndex === index ? 'active' : ''}`}
-              />
-            ))}
+        {/* ЛЕВАЯ КОЛОНКА: ГАЛЕРЕЯ КАРТИНОК */}
+        <div>
+          <div className="details-main-image-box">
+            <img src={product.images && product.images.length > 0 ? `http://localhost:8000${product.images[activeImgIndex]?.url}` : 'https://placeholder.com'} alt={product.name} className="details-main-image" />
           </div>
-        )}
-      </div>
 
-      {/* ПРАВАЯ КОЛОНКА: ИНФОРМАЦИЯ И ПОКУПКА */}
-      <div className="details-info-column">
-        <span className="details-meta-breadcrumbs">
-          {product.category?.name} / {product.brand?.name || 'Без бренда'}
-        </span>
-        <h2 className="details-product-title">{product.name}</h2>
-
-        {/* ⭐ РЕЙТИНГ */}
-        <div className="details-rating-stars">
-          {/* Если рейтинг есть — округляем его, если нет — ставим 0 звезд */}
-          {'★'.repeat(product.average_rating ? Math.round(product.average_rating) : 0)}
-          {'☆'.repeat(5 - (product.average_rating ? Math.round(product.average_rating) : 0))}
-          <span className="details-rating-count">({product.reviews?.length || 0} отзывов)</span>
-        </div>
-
-        <div className="details-product-price">
-          {Number(product.base_price).toLocaleString()} ₽
-        </div>
-
-        {/* СЕТКА ВЫБОРА РАЗМЕРОВ (ВАРИАНТОВ) */}
-        {product.variants && product.variants.length > 0 && (
-          <div className="details-variants-wrapper">
-            <label className="details-variants-label">Выберите вариант / размер:</label>
-            <div className="details-variants-grid">
-              {product.variants.map(v => {
-                const inStock = parseInt(v.stock, 10) > 0;
-                const isSelected = selectedVariantId === v.id;
-
-                // Динамические классы в зависимости от наличия и фокуса
-                let variantClass = "btn-variant-select ";
-                if (inStock) {
-                  variantClass += "in-stock " + (isSelected ? "selected" : "");
-                } else {
-                  variantClass += "out-of-stock";
-                }
-
-                return (
-                  <button
-                    key={v.id}
-                    type="button"
-                    disabled={!inStock}
-                    onClick={() => setSelectedVariantId(v.id)}
-                    className={variantClass}
-                  >
-                    {v.characteristics?.size || 'Standard'} ({v.characteristics?.color || 'Standard'})
-                  </button>
-                );
-              })}
+          {/* Миниатюры снизу */}
+          {product.images && product.images.length > 1 && (
+            <div className="details-thumbnails-list">
+              {product.images.map((img, index) => (
+                <img key={img.id} src={`http://localhost:8000${img.url}`} alt="Превью" onClick={() => setActiveImgIndex(index)} className={`details-thumbnail-img ${activeImgIndex === index ? 'active' : ''}`} />
+              ))}
             </div>
+          )}
+        </div>
 
-            <small className={`details-stock-hint ${currentStock > 0 ? 'in-stock' : 'out-of-stock'}`}>
-              {currentStock > 0 ? `🟢 В наличии на складе: ${currentStock} шт.` : '🔴 Товар данного размера закончился'}
-            </small>
+        {/* ПРАВАЯ КОЛОНКА: ИНФОРМАЦИЯ И ПОКУПКА */}
+        <div className="details-info-column">
+          <span className="details-meta-breadcrumbs">{product.brand?.name || 'Без бренда'} / {product.category?.name}</span>
+          <h2 className="details-product-title">{product.name}</h2>
+
+          {/* ⭐ РЕЙТИНГ */}
+          <div className="details-rating-stars">
+            {'★'.repeat(product.average_rating ? Math.round(parseFloat(product.average_rating)) : 0)}
+            {'☆'.repeat(5 - (product.average_rating ? Math.round(parseFloat(product.average_rating)) : 0))}
+            <span className="details-rating-count">({product.reviews?.length || 0} отзывов)</span>
           </div>
-        )}
 
-        <p className="details-product-description">
-          {product.description || 'Описание товара временно отсутствует.'}
-        </p>
+          <div className="details-product-price">{Number(product.base_price).toLocaleString()} ₽</div>
 
-        <button
-          onClick={handleAddToCartClick}
-          disabled={currentStock === 0}
-          className={`btn-details-buy-submit ${currentStock > 0 ? 'active' : 'disabled'}`}
-        >
-          {currentStock > 0 ? '🛒 Добавить в корзину' : '❌ Нет в наличии'}
-        </button>
+          {/* СЕТКА ВЫБОРА РАЗМЕРОВ (ВАРИАНТОВ) */}
+          {product.variants && product.variants.length > 0 && (
+            <div className="details-variants-wrapper">
+              <label className="details-variants-label">Выберите вариант / размер:</label>
+              <div className="details-variants-grid">
+                {product.variants.map(v => {
+                  const inStock = parseInt(v.stock, 10) > 0;
+                  const isSelected = selectedVariantId === v.id;
+                  let variantClass = "btn-variant-select " + (inStock ? (isSelected ? "selected" : "") : "disabled");
+                  return (
+                    <button key={v.id} type="button" disabled={!inStock} onClick={() => setSelectedVariantId(v.id)} className={variantClass}>
+                      {v.characteristics?.size || 'Standard'} ({v.characteristics?.color || 'Standard'})
+                    </button>
+                  );
+                })}
+              </div>
+              <small className={`details-stock-hint ${currentStock > 0 ? 'in-stock' : 'out-of-stock'}`}>
+                {currentStock > 0 ? `🟢 В наличии на складе: ${currentStock} шт.` : '🔴 Товар данного размера закончился'}
+              </small>
+            </div>
+          )}
+
+          <p className="details-product-description">{product.description || 'Описание товара временно отсутствует.'}</p>
+          <button onClick={handleAddToCartClick} disabled={currentStock === 0} className={`btn-details-buy-submit ${currentStock > 0 ? 'active' : 'disabled'}`}>
+            {currentStock > 0 ? '🛒 Добавить в корзину' : '❌ Нет в наличии'}
+          </button>
+        </div>
       </div>
 
+      {/* БЛОК ОТЗЫВОВ И ФОРМА НАПИСАНИЯ */}
       <div className="reviews-section-container" style={{ gridColumn: '1 / -1', marginTop: '30px' }}>
         <h3 className="reviews-section-title">💬 Отзывы покупателей ({product.reviews?.length || 0})</h3>
 
@@ -191,8 +187,11 @@ export const ProductDetailsPage = () => {
                 <span className="review-author-name">👤 {rev.user?.username || "Покупатель"}</span>
                 <span className="review-date-stamp">{new Date(rev.created_at).toLocaleDateString()}</span>
               </div>
-              <div style={{ color: '#f59e0b', marginBottom: '6px' }}>{'★'.repeat(rev.rating)}{'☆'.repeat(5 - rev.rating)}</div>
-              <p className="review-comment-text">{rev.text}</p>
+              <div style={{ color: '#f59e0b', marginBottom: '6px', fontSize: '16px' }}>
+                {'★'.repeat(rev.rating ? parseInt(rev.rating, 10) : 0)}
+                {'☆'.repeat(5 - (rev.rating ? parseInt(rev.rating, 10) : 0))}
+              </div>
+              <p className="review-comment-text">{rev.comment}</p>
             </div>
           ))
         )}
@@ -214,9 +213,10 @@ export const ProductDetailsPage = () => {
         ) : eligibility.already_reviewed ? (
           <div className="review-denied-notice">✨ Вы уже оставили свой отзыв на этот товар.</div>
         ) : (
-          <div className="review-denied-notice">🔒 Оставить отзыв могут только покупатели после успешной **доставки** товара.</div>
+          <div className="review-denied-notice">🔒 Оставить отзыв могут только покупатели после успешной доставки товара.</div>
         )}
       </div>
     </div>
   );
 };
+
