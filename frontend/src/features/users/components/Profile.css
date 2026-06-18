@@ -1,0 +1,116 @@
+.profile-container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.profile-title {
+  color: #111827;
+  border-bottom: 2px solid #f3f4f6;
+  padding-bottom: 15px;
+  margin-bottom: 25px;
+}
+
+.profile-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+/* Карточка данных пользователя */
+.profile-info-card {
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+.profile-info-card h3 {
+  margin-top: 0;
+  color: #4e73df;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.info-data-row {
+  margin-bottom: 12px;
+  font-size: 15px;
+  color: #111827 !important; /* Контрастный глубокий черный */
+}
+.info-data-row strong {
+  color: #4b5563;
+}
+
+/* Стили формы */
+.profile-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.profile-edit-form label {
+  font-weight: 700;
+  color: #374151;
+  font-size: 14px;
+}
+
+.profile-input-field {
+  padding: 10px;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+.profile-input-field:focus {
+  border-color: #4e73df;
+  outline: none;
+}
+
+.btn-profile-save {
+  padding: 12px;
+  background-color: #4e73df;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.btn-profile-save:hover {
+  background-color: #2e59d9;
+}
+
+/* Блок шапки анкеты с аватаркой */
+.profile-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  border-bottom: 2px dashed #e5e7eb;
+  padding-bottom: 15px;
+}
+
+/* Круглая авто-аватарка */
+.profile-avatar-circle {
+  width: 60px;
+  height: 60px;
+  background-color: #4e73df; /* Насыщенный синий бренд-цвет */
+  color: #ffffff !important;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 800;
+  text-transform: uppercase;
+  box-shadow: 0 4px 8px rgba(78, 115, 223, 0.2);
+}
+
+.profile-username-title {
+  margin: 0;
+  font-size: 20px;
+  color: #111827;
+  font-weight: 800;
+}

@@ -55,3 +55,16 @@ export const deleteUser = async (userId) => {
   const response = await apiClient.delete(`/users/${userId}`);
   return response.data;
 };
+
+
+// Отправить обновленные данные профиля в PostgreSQL
+export const updateUserProfile = async (profileData) => {
+  const response = await apiClient.put('/users/profile/update', profileData);
+  return response.data;
+};
+
+// Получить список личных заказов пользователя из бэкенда
+export const getUserOrders = async () => {
+  const response = await apiClient.get('/orders/my-orders');
+  return response.data;
+};

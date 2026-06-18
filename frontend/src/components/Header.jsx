@@ -35,16 +35,33 @@ export const Header = ({ user, setUser }) => {
           <Link to="/admin" className="admin-link">⚙️ Админка</Link>
         )}
 
-        <Link to="/cart" className="header-cart-link" style={{ textDecoration: 'none', color: '#111827', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px', position: 'relative' }}>
-          <span>🛒</span> Корзина
-        </Link>
-
+        {/* ПРОВЕРКА: Показываем Профиль, Корзину и Выход только ЗАЛОГИНЕННОМУ пользователю */}
         {user ? (
-          <div className="user-info">
-            <span>👤 {user.username || user.email}</span>
-            <button onClick={handleLogout}>Выйти</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+
+            {/* 1. КОРЗИНА */}
+            <Link to="/cart" className="header-cart-link" style={{ textDecoration: 'none', color: '#111827', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px', position: 'relative' }}>
+              <span>🛒</span> Корзина
+            </Link>
+
+            {/* 2. ИНФО О ПОЛЬЗОВАТЕЛЕ (Имя стало кликабельной ссылкой на профиль!) */}
+            <div className="user-info" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Link
+                to="/profile"
+                title="Перейти в личный кабинет"
+                style={{ textDecoration: 'none', color: '#111827', fontWeight: '700', transition: 'color 0.2s' }}
+                onMouseEnter={(e) => e.target.style.color = '#4e73df'}
+                onMouseLeave={(e) => e.target.style.color = '#111827'}
+              >
+                👤 {user.username || user.email}
+              </Link>
+
+              <button onClick={handleLogout}>Выйти</button>
+            </div>
+
           </div>
         ) : (
+          /* Если пользователь ГОСТЬ — показываем только Войти / Регистрация */
           <div className="auth-btns">
             <Link to="/login">Войти</Link>
             <Link to="/register">Регистрация</Link>
@@ -54,4 +71,3 @@ export const Header = ({ user, setUser }) => {
     </header>
   );
 };
-

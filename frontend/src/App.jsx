@@ -48,7 +48,7 @@ function App() {
             <Route path="/register" element={<RegisterForm />} />
             {/* Передаем setUser в LoginForm, чтобы он "запомнил" вход */}
             <Route path="/login" element={<LoginForm onLoginSuccess={setUser} />} />
-            <Route path="/profile" element={<Profile user={user} />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/admin/*" element={<AdminDashboard user={user} />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/products/:slug" element={<ProductDetailsPage />} />
