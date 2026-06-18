@@ -4,6 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from typing import TYPE_CHECKING, List
 from app.core.database import Base
+from app.features.products.models import Product
 
 if TYPE_CHECKING:
     from app.features.users.models import User
@@ -45,3 +46,4 @@ class CartItem(Base):
     
     # Связи
     cart: Mapped["Cart"] = relationship("Cart", back_populates="items")
+    product: Mapped["Product"] = relationship("Product")

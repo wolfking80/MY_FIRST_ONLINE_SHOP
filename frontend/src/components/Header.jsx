@@ -35,6 +35,10 @@ export const Header = ({ user, setUser }) => {
           <Link to="/admin" className="admin-link">⚙️ Админка</Link>
         )}
 
+        <Link to="/cart" className="header-cart-link" style={{ textDecoration: 'none', color: '#111827', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px', position: 'relative' }}>
+          <span>🛒</span> Корзина
+        </Link>
+
         {user ? (
           <div className="user-info">
             <span>👤 {user.username || user.email}</span>

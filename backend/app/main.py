@@ -8,6 +8,7 @@ from app.features.orders.router import router as orders_router
 from app.features.products.router import router as products_router
 from app.features.users.router import router as users_router
 from app.features.users.auth import router as auth_router
+from app.features.carts.router import router as cart_router
 
 
 # Принудительно связываем все отношения по именам
@@ -38,6 +39,7 @@ app.include_router(orders_router, prefix="/api/v1")
 app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
 # Подключаем каталог товаров
 app.include_router(products_router, prefix="/api/v1/products", tags=["products"])
+app.include_router(cart_router, prefix="/api/v1")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

@@ -10,6 +10,7 @@ import { ProductList } from './features/products/components/ProductList';
 import { Profile } from './features/users/components/Profile';
 import { RegisterForm } from './features/users/components/RegisterForm'; // Импорт формы регистрации
 import { LoginForm } from './features/users/components/LoginForm';   // Импорт формы авторизации
+import { CartPage } from './features/cart/components/CartPage.jsx';
 import './App.css';
 
 
@@ -48,6 +49,7 @@ function App() {
             <Route path="/login" element={<LoginForm onLoginSuccess={setUser} />} />
             <Route path="/profile" element={<Profile user={user} />} />
             <Route path="/admin/*" element={<AdminDashboard user={user} />} />
+            <Route path="/cart" element={<CartPage />} />
           </Routes>
         </main>
 
