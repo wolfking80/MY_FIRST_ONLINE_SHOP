@@ -43,7 +43,11 @@ async def get_products(
     # Грузим товар + бренд + все картинки
     query = (
         select(Product)
-        .options(joinedload(Product.brand), joinedload(Product.images))
+        .options(
+            joinedload(Product.brand),
+            selectinload(Product.images),
+            selectinload(Product.variants)
+        )
         .where(Product.is_active == True)
     )
 
@@ -66,6 +70,9 @@ async def get_products(
         avg_score = rating_res.scalar()
         
         prod.average_rating = float(avg_score) if avg_score is not None else 0.0
+        
+        # Складываем stock всех вариантов этого товара
+        prod.total_stock = sum(int(v.stock) for v in prod.variants) if prod.variants else 0
 
     return products
 

@@ -20,5 +20,6 @@ class ProductShort(BaseModel):
     average_rating: float
     brand: BrandOut | None
     images: List[ImageOut]
+    total_stock: int = 0
     
     model_config = ConfigDict(from_attributes=True)

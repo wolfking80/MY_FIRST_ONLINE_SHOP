@@ -161,9 +161,20 @@ export const ProductList = () => {
                 </Link>
 
                 <p className="product-price">{Number(product.base_price).toLocaleString()} ₽</p>
-                <button className="add-to-cart-btn" onClick={() => handleBuyClick(product.id)}>
-                  <span>🛒</span> В корзину
-                </button>
+                {/* Динамическая кнопка: если остаток 0 — блокируем её */}
+                {product.total_stock > 0 ? (
+                  <button className="add-to-cart-btn" onClick={() => handleBuyClick(product.id)}>
+                    <span>🛒</span> В корзину
+                  </button>
+                ) : (
+                  <button
+                    className="add-to-cart-btn"
+                    disabled
+                    style={{ backgroundColor: '#4b5563', color: '#9ca3af', cursor: 'not-allowed' }}
+                  >
+                    <span>❌</span> Нет в наличии
+                  </button>
+                )}
               </div>
             </div>
           ))}
