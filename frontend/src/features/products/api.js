@@ -69,3 +69,20 @@ export const getProductDetails = async (slug) => {
   const response = await apiClient.get(`/products/details/${slug}`);
   return response.data;
 };
+
+
+// Проверить, доставлен ли товар пользователю для написания отзыва
+export const checkReviewEligibility = async (productId) => {
+  const response = await apiClient.get(`/products/check-review-eligibility/${productId}`);
+  return response.data;
+};
+
+// Опубликовать новый отзыв о товаре
+export const addProductReview = async (productId, rating, text) => {
+  const response = await apiClient.post('/products/reviews/add', {
+    product_id: productId,
+    rating: rating,
+    text: text
+  });
+  return response.data;
+};

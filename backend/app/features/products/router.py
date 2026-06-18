@@ -20,8 +20,9 @@ from app.features.products.models import (
 )
 from app.features.products.schemas import ProductShort
 from app.features.products.utils import save_product_image
-from app.features.users.dependencies import check_is_admin, check_is_staff
+from app.features.users.dependencies import check_is_admin, check_is_staff, get_current_user
 from app.features.users.models import User
+from app.features.orders.models import Order, OrderItem
 
 router = APIRouter(tags=["Catalog"])
 
@@ -56,7 +57,7 @@ async def get_products(
 
 
 import json
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # Создаем мини-схему для валидации входящих вариантов прямо внутри JSON
@@ -338,4 +339,66 @@ async def get_product_details_by_slug(
         raise HTTPException(status_code=404, detail="Товар не найден")
         
     return product
+
+
+
+# Схема валидации нового отзыва
+class ReviewCreateInput(BaseModel):
+    product_id: int
+    rating: int = Field(..., ge=1, le=5) # Оценка строго от 1 до 5
+    text: str = Field(..., min_length=2)
+
+# Проверить, имеет ли право пользователь оставить отзыв
+@router.get("/check-review-eligibility/{product_id}", status_code=200)
+async def check_review_eligibility(
+    product_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Ищем успешный доставленный заказ этого юзера, где лежал данный товар
+    query = (
+        select(Order)
+        .join(OrderItem)
+        .where(
+            Order.user_id == current_user.id,
+            Order.status == "delivered", # Товар должен быть доставлен!
+            OrderItem.product_id == product_id
+        )
+    )
+    result = await db.execute(query)
+    order = result.scalars().first()
+    
+    # Также проверим, не оставлял ли он отзыв ранее (один товар - один отзыв)
+    already_reviewed = select(Review).where(Review.product_id == product_id, Review.user_id == current_user.id)
+    review_result = await db.execute(already_reviewed)
+    
+    return {
+        "eligible": order is not None,
+        "already_reviewed": review_result.scalars().first() is not None
+    }
+
+# Опубликовать новый отзыв
+@router.post("/reviews/add", status_code=201)
+async def add_product_review(
+    payload: ReviewCreateInput,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Проверка безопасности на сервере
+    check_query = select(Order).join(OrderItem).where(
+        Order.user_id == current_user.id, Order.status == "delivered", OrderItem.product_id == payload.product_id
+    )
+    check_result = await db.execute(check_query)
+    if not check_result.scalars().first():
+        raise HTTPException(status_code=403, detail="Вы можете оставить отзыв только после получения товара!")
+
+    new_review = Review(
+        product_id=payload.product_id,
+        user_id=current_user.id,
+        rating=payload.rating,
+        text=payload.text
+    )
+    db.add(new_review)
+    await db.commit()
+    return {"status": "success", "message": "Отзыв успешно опубликован!"}
 
