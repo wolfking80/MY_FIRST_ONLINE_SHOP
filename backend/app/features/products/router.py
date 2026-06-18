@@ -1,5 +1,7 @@
+from decimal import Decimal 
 import uuid
 
+from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -59,7 +61,7 @@ from pydantic import BaseModel
 class VariantInput(BaseModel):
     sku: str | None = None
     stock: int = 0
-    price: float | None = None
+    price: Decimal | None = None
     color: str = "Standard"
     size: str = "Standard"
 
@@ -79,7 +81,7 @@ async def admin_add_product(
         raw_data = json.loads(product_data)
 
         name = raw_data["name"]
-        base_price = float(raw_data["base_price"])
+        base_price = Decimal(str(raw_data["base_price"]))
         category_id = int(raw_data["category_id"])
         brand_id = int(raw_data["brand_id"]) if raw_data.get("brand_id") else None
         description = raw_data.get("description", "")
@@ -122,7 +124,7 @@ async def admin_add_product(
     # Циклом создаем все пришедшие варианты в базу данных
     for v in variants_list:
         # Если админ оставил цену варианта пустой, берем базовую цену товара
-        v_price = float(v["price"]) if v.get("price") else base_price
+        v_price = Decimal(v["price"]) if v.get("price") else base_price
         v_sku = (
             v["sku"]
             if v.get("sku")
@@ -242,7 +244,7 @@ async def admin_edit_product(
     product_id: int,
     product_data: str = Form(...),
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(check_is_staff),
+    _: User = Depends(check_is_staff),
 ):
     # Находим товар в базе
     query = (
@@ -264,7 +266,7 @@ async def admin_edit_product(
     # Принудительное приведение типов, чтобы избежать ошибок валидации Pydantic/SQLAlchemy
     try:
         product.name = str(raw_data["name"])
-        product.base_price = float(raw_data["base_price"])
+        product.base_price = Decimal(str(raw_data["base_price"]))
         product.category_id = int(raw_data["category_id"])
         product.brand_id = (
             int(raw_data["brand_id"]) if raw_data.get("brand_id") else None
@@ -283,7 +285,7 @@ async def admin_edit_product(
     variants_list = raw_data.get("variants", [])
     for v in variants_list:
         try:
-            v_price = float(v["price"]) if v.get("price") else product.base_price
+            v_price = Decimal(str(v["price"])) if v.get("price") else product.base_price
             v_stock = int(v["stock"])
         except (ValueError, TypeError):
             v_price = product.base_price
