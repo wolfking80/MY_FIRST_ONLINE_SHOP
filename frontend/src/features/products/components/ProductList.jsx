@@ -136,7 +136,7 @@ export const ProductList = () => {
                 <h4 className="product-name">{product.name}</h4>
                 <p className="product-price">{Number(product.base_price).toLocaleString()} ₽</p>
                 <button className="add-to-cart-btn" onClick={() => handleBuyClick(product.id)}>
-                  <span>🛒</span> Купить
+                  <span>🛒</span> В корзину
                 </button>
               </div>
             </div>
