@@ -66,7 +66,7 @@ async def add_to_cart(
         db.add(cart)
         await db.flush()  # Получаем id новой корзины
 
-    # Проверяем, лежит ли уже этот товар этого варианта в корзине
+    # Проверяем дубликаты товара в корзине
     item_query = select(CartItem).where(
         CartItem.cart_id == cart.id,
         CartItem.product_id == product.id,
@@ -75,11 +75,28 @@ async def add_to_cart(
     item_result = await db.execute(item_query)
     cart_item = item_result.scalars().first()
 
+    # ЗАЩИТА ОСТАТКОВ: Ищем реальный stock этого варианта на складе
+    from app.features.products.models import ProductVariant
+
+    variant_query = select(ProductVariant).where(ProductVariant.id == v_id)
+    variant_result = await db.execute(variant_query)
+    db_variant = variant_result.scalars().first()
+
     if cart_item:
-        # Если товар уже в корзине — просто увеличиваем количество на 1
+        # Если товар уже в корзине, проверяем: не превысит ли +1 лимит склада
+        if db_variant and cart_item.quantity >= db_variant.stock:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Извините, вы не можете добавить больше товаров. На складе всего {db_variant.stock} шт.!",
+            )
         cart_item.quantity += 1
     else:
-        # Если товара нет — создаем новую запись CartItem
+        # Если товара еще нет в корзине, проверяем: есть ли вообще хоть 1 шт. на складе
+        if db_variant and db_variant.stock <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Извините, данного товара сейчас нет в наличии на складе!",
+            )
         cart_item = CartItem(
             cart_id=cart.id,
             user_id=current_user.id,
@@ -88,7 +105,6 @@ async def add_to_cart(
             quantity=1,
         )
         db.add(cart_item)
-
     await db.commit()
     return {
         "status": "success",
