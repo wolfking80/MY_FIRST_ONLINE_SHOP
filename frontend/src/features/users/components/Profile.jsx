@@ -172,7 +172,8 @@ export const Profile = () => {
                 <div style={{ fontSize: '14px', color: '#4b5563' }}>
                   {order.items?.map((item, idx) => (
                     <div key={idx} style={{ padding: '4px 0', borderBottom: idx !== order.items.length - 1 ? '1px dashed #e3e6f0' : 'none' }}>
-                      • {item.product?.name} — {item.quantity} шт. x {Number(item.price).toLocaleString()} ₽
+                      • {item.product?.name} — {item.quantity} шт. x {Number(item.price_at_purchase).toLocaleString()} ₽
+
                     </div>
                   ))}
                 </div>
