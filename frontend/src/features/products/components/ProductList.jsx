@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import apiClient from '../../../shared/api/client'; // Централизованный клиент
 import { getCategories, getBrands } from '../api'; // Подключаем функции из api.js
 import { addToCart } from '../../cart/api';
@@ -121,19 +122,33 @@ export const ProductList = () => {
         <div className="product-grid">
           {products.map((product) => (
             <div key={product.id} className="product-card">
-              <div className="product-image-container">
-                <img
-                  className="product-image"
-                  src={
-                    product.images && product.images.length > 0
-                      ? `http://localhost:8000${product.images[0].url}`
-                      : 'https://placeholder.com'
-                  }
-                  alt={product.name}
-                />
-              </div>
+
+              {/* Ссылка-переход по клику на изображение товара */}
+              <Link to={`/products/${product.slug}`} style={{ textDecoration: 'none', display: 'block' }}>
+                <div className="product-image-container">
+                  <img
+                    className="product-image"
+                    src={
+                      product.images && product.images.length > 0
+                        ? `http://localhost:8000${product.images[0].url}`
+                        : 'https://placeholder.com'
+                    }
+                    alt={product.name}
+                  />
+                </div>
+              </Link>
+
               <div className="product-info">
-                <h4 className="product-name">{product.name}</h4>
+                {/* Отображение привязанного к товару бренда */}
+                <span style={{ fontSize: '11px', color: '#858796', textTransform: 'uppercase', fontWeight: '700', display: 'block', marginBottom: '4px' }}>
+                  {product.brand?.name || 'Без бренда'}
+                </span>
+
+                {/* Ссылка-переход по клику на название товара */}
+                <Link to={`/products/${product.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <h4 className="product-name" style={{ margin: '0 0 8px 0', fontSize: '15px' }}>{product.name}</h4>
+                </Link>
+
                 <p className="product-price">{Number(product.base_price).toLocaleString()} ₽</p>
                 <button className="add-to-cart-btn" onClick={() => handleBuyClick(product.id)}>
                   <span>🛒</span> В корзину

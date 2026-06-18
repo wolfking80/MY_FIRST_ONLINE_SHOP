@@ -11,6 +11,7 @@ import { Profile } from './features/users/components/Profile';
 import { RegisterForm } from './features/users/components/RegisterForm'; // Импорт формы регистрации
 import { LoginForm } from './features/users/components/LoginForm';   // Импорт формы авторизации
 import { CartPage } from './features/cart/components/CartPage.jsx';
+import { ProductDetailsPage } from './features/products/components/ProductDetailsPage.jsx';
 import './App.css';
 
 
@@ -50,6 +51,7 @@ function App() {
             <Route path="/profile" element={<Profile user={user} />} />
             <Route path="/admin/*" element={<AdminDashboard user={user} />} />
             <Route path="/cart" element={<CartPage />} />
+            <Route path="/products/:slug" element={<ProductDetailsPage />} />
           </Routes>
         </main>
 

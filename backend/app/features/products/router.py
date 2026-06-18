@@ -3,9 +3,10 @@ import uuid
 
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from slugify import slugify
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from sqlalchemy.orm import joinedload
+from sqlalchemy import func, select
+from sqlalchemy.orm import joinedload, selectinload
 from typing import List
 
 from app.core.database import get_db
@@ -15,6 +16,7 @@ from app.features.products.models import (
     Product,
     ProductImage,
     ProductVariant,
+    Review,
 )
 from app.features.products.schemas import ProductShort
 from app.features.products.utils import save_product_image
@@ -74,7 +76,7 @@ async def admin_add_product(
     ),
     files: list[UploadFile] = File(..., description="Картинки товара"),
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(check_is_staff),
+    _: User = Depends(check_is_staff),
 ):
     try:
         # Парсим JSON из строки
@@ -96,7 +98,7 @@ async def admin_add_product(
         )
 
     # Создаем базовый товар
-    slug = name.lower().replace(" ", "-") + "-" + str(uuid.uuid4())[:4]
+    slug = slugify(name) + "-" + str(uuid.uuid4())[:4]
     new_product = Product(
         name=name,
         base_price=base_price,
@@ -273,6 +275,8 @@ async def admin_edit_product(
         )
         product.description = raw_data.get("description", "")
         product.is_active = bool(raw_data.get("is_active", True))
+        product.slug = slugify(product.name) + "-" + str(uuid.uuid4())[:4]
+        
     except (ValueError, TypeError) as e:
         raise HTTPException(status_code=422, detail=f"Ошибка типов данных: {str(e)}")
 
@@ -311,3 +315,27 @@ async def admin_edit_product(
 
     await db.commit()
     return {"status": "success", "message": "Товар и варианты успешно обновлены"}
+
+
+@router.get("/details/{slug}", status_code=200)
+async def get_product_details_by_slug(
+    slug: str,
+    db: AsyncSession = Depends(get_db)
+):
+    # Принудительно ищем в нижнем регистре, чтобы исключить любые несовпадения
+    query = select(Product).options(
+        joinedload(Product.brand),
+        joinedload(Product.category),
+        selectinload(Product.images),
+        selectinload(Product.variants),
+        selectinload(Product.reviews).joinedload(Review.user)
+    ).where(func.lower(Product.slug) == slug.lower())
+    
+    result = await db.execute(query)
+    product = result.scalars().first()
+    
+    if not product:
+        raise HTTPException(status_code=404, detail="Товар не найден")
+        
+    return product
+

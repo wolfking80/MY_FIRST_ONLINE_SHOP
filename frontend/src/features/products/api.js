@@ -62,3 +62,10 @@ export const editProduct = async (productId, updatedPayload) => {
   });
   return response.data;
 };
+
+
+// Получить полные детали товара по его slug (для детальной карточки)
+export const getProductDetails = async (slug) => {
+  const response = await apiClient.get(`/products/details/${slug}`);
+  return response.data;
+};
