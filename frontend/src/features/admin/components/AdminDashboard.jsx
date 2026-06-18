@@ -5,6 +5,7 @@ import { CategoryBrandManagement } from './CategoryBrandManagement';
 import { ProductsManagement } from './ProductManagement.jsx';
 import { AddProductForm } from './AddProductForm';
 import { AdminOverview } from './AdminOverview.jsx';
+import { OrdersManagement } from './OrdersManagement';
 import './AdminDashboard.css';
 
 export const AdminDashboard = ({ user }) => {
@@ -26,6 +27,13 @@ export const AdminDashboard = ({ user }) => {
           className={`sidebar-btn ${activeTab === 'overview' ? 'active' : ''}`}
         >
           📊 Обзор магазина
+        </button>
+
+        <button
+          onClick={() => setActiveTab('orders')}
+          className={`sidebar-btn ${activeTab === 'orders' ? 'active' : ''}`}
+        >
+          🛍️ Управление заказами
         </button>
 
         <button
@@ -61,6 +69,8 @@ export const AdminDashboard = ({ user }) => {
       <main className="admin-content">
         <div className="admin-card">
           {activeTab === 'overview' && <AdminOverview currentUser={user} />}
+
+          {activeTab === 'orders' && <OrdersManagement />}
 
           {activeTab === 'add_product' && <AddProductForm />}
 
