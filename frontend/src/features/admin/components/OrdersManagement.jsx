@@ -49,8 +49,13 @@ export const OrdersManagement = () => {
               {/* Шапка карточки */}
               <div className="admin-order-card-header">
                 <span className="admin-order-id-link">Заказ №{order.id} (Покупатель ID: {order.user_id})</span>
-                <span className={`admin-order-status-badge ${order.status === 'delivered' ? 'delivered' : 'pending'}`}>
-                  {order.status === 'delivered' ? '✓ Доставлен' : `⏳ ${order.status}`}
+                {/* Подставляем order.status напрямую в класс*/}
+                <span className={`admin-order-status-badge ${order.status}`}>
+                  {order.status === 'pending' && '⏳ Обрабатывается'}
+                  {order.status === 'confirmed' && '📦 Подтвержден'}
+                  {order.status === 'shipped' && '🚚 В пути'}
+                  {order.status === 'delivered' && '✓ Доставлен'}
+                  {order.status === 'cancelled' && '❌ Отменен'}
                 </span>
               </div>
 
@@ -72,22 +77,45 @@ export const OrdersManagement = () => {
                 ))}
               </div>
 
-              {/* Подвал карточки */}
-              <div className="admin-order-card-footer">
-                <span className="admin-order-total-price">
-                  Сумма к оплате: {Number(order.total_amount).toLocaleString()} ₽
-                </span>
+              {/* Подвал карточки заказа с динамической цепочкой статусов */}
+              <div className="admin-order-card-footer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', marginTop: '15px', borderTop: '1px dashed #e3e6f0', paddingTop: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span className="admin-order-total-price">
+                    Сумма к оплате: {Number(order.total_amount).toLocaleString()} ₽
+                  </span>
+                </div>
 
-                {order.status !== 'delivered' && (
-                  <button
-                    type="button"
-                    onClick={() => changeStatus(order.id, 'delivered')}
-                    className="btn-admin-order-deliver"
-                  >
-                    🚚 Отметить как ДОСТАВЛЕН
-                  </button>
-                )}
+                {/* Ряды кнопок перевода статуса по цепочке логистики */}
+                <div className="admin-order-actions-row" style={{ display: 'flex', gap: '10px', marginTop: '12px', justifyContent: 'flex-end' }}>
+
+                  {order.status === 'pending' && (
+                    <button type="button" onClick={() => changeStatus(order.id, 'confirmed')} className="btn-status-step" style={{ backgroundColor: '#4e73df' }}>
+                      📋 Подтвердить заказ
+                    </button>
+                  )}
+
+                  {order.status === 'confirmed' && (
+                    <button type="button" onClick={() => changeStatus(order.id, 'shipped')} className="btn-status-step" style={{ backgroundColor: '#36b9cc' }}>
+                      🚚 Передать курьеру (В пути)
+                    </button>
+                  )}
+
+                  {order.status === 'shipped' && (
+                    <button type="button" onClick={() => changeStatus(order.id, 'delivered')} className="btn-status-step" style={{ backgroundColor: '#1cc88a' }}>
+                      ✓ Отметить как ДОСТАВЛЕН
+                    </button>
+                  )}
+
+                  {/* Кнопка отмены доступна на этапах сборки */}
+                  {(order.status === 'pending' || order.status === 'confirmed') && (
+                    <button type="button" onClick={() => changeStatus(order.id, 'cancelled')} className="btn-status-step" style={{ backgroundColor: '#e74a3b' }}>
+                      ❌ Отменить заказ
+                    </button>
+                  )}
+
+                </div>
               </div>
+
 
             </div>
           ))}

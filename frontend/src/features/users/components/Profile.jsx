@@ -157,14 +157,24 @@ export const Profile = () => {
               <div key={order.id} style={{ border: '1px solid #e3e6f0', borderRadius: '8px', padding: '15px', background: '#f8f9fa' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontWeight: '700' }}>
                   <span style={{ color: '#4e73df' }}>Заказ №{order.id} от {new Date(order.created_at).toLocaleDateString()}</span>
-                  <span style={{
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    fontSize: '12px',
+                  
+                  <span style={{ 
+                    padding: '4px 10px', 
+                    borderRadius: '6px', 
+                    fontSize: '12px', 
                     color: '#fff',
-                    backgroundColor: order.status === 'delivered' ? '#1cc88a' : (order.status === 'pending' ? '#f6c23e' : '#4e73df')
+                    fontWeight: '700',
+                    backgroundColor: 
+                      order.status === 'delivered' ? '#1cc88a' : 
+                      order.status === 'pending' ? '#f6c23e' : 
+                      order.status === 'confirmed' ? '#4e73df' : 
+                      order.status === 'shipped' ? '#36b9cc' : '#e74a3b'
                   }}>
-                    {order.status === 'delivered' ? '✓ Доставлен' : (order.status === 'pending' ? '⏳ Обрабатывается' : order.status)}
+                    {order.status === 'pending' && '⏳ Обрабатывается'}
+                    {order.status === 'confirmed' && '📦 Подтвержден'}
+                    {order.status === 'shipped' && '🚚 В пути'}
+                    {order.status === 'delivered' && '✓ Доставлен'}
+                    {order.status === 'cancelled' && '❌ Отменен'}
                   </span>
                 </div>
 

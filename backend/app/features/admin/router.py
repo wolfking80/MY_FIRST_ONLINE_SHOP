@@ -1,7 +1,10 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.database import get_db
 from app.features.users.dependencies import check_is_staff
@@ -57,6 +60,19 @@ async def admin_update_order_status(
     # Если статус меняется на доставлен, автоматически закрываем и оплату для симуляции
     if new_status == "delivered":
         order.payment_status = "paid"
+        order.paid_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        
+    # Логируем изменение в status_history
+    current_log = list(order.status_history) if order.status_history else []
+    current_log.append({
+        "status": new_status,
+        "at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
+        "by": "admin"
+    })
+    
+    # Принудительно маркируем поле JSON как измененное для SQLAlchemy
+    order.status_history = current_log
+    flag_modified(order, "status_history")    
 
     await db.commit()
     return {
