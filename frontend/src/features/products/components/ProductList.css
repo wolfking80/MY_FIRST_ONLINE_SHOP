@@ -1,5 +1,5 @@
 /* Контейнер для всей сетки */
-.product-grid {
+.products-grid {
     display: grid;
     /* Автоматические колонки: минимум 250px, максимум — сколько влезет */
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));

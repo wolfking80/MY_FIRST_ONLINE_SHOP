@@ -136,8 +136,8 @@ export const ProductList = () => {
 
               return (
                 <div key={product.id} className="product-card">
-                  <Link to={`/products/${product.slug}`} className="product-image-link">
-                    <img src={imageUrl} alt={product.name} className="product-card-image" />
+                  <Link to={`/products/${product.slug}`} className="product-image-container">
+                    <img src={imageUrl} alt={product.name} className="product-image" />
                   </Link>
 
                   <div className="product-info">
