@@ -109,17 +109,32 @@ async def update_user_profile(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Обновляем только те поля, которые прислал фронтенд
+    # Обновляем поля, превращая пустые строки "" в None (NULL в базе данных)
+    # Это на 100% решает проблему с UniqueViolationError по телефону!
     if payload.first_name is not None:
-        current_user.first_name = payload.first_name
+        current_user.first_name = payload.first_name.strip() if payload.first_name.strip() else None
+        
     if payload.last_name is not None:
-        current_user.last_name = payload.last_name
+        current_user.last_name = payload.last_name.strip() if payload.last_name.strip() else None
+        
     if payload.phone is not None:
-        current_user.phone = payload.phone
+        current_user.phone = payload.phone.strip() if payload.phone.strip() else None
+        
     if payload.city is not None:
-        current_user.city = payload.city
+        current_user.city = payload.city.strip() if payload.city.strip() else None
 
+    # Фиксируем изменения в PostgreSQL
     await db.commit()
+    
+    # БЕЗОПАСНЫЙ ВЫВОД ДАТЫ: если это строка — отдаем как есть, если datetime — применяем .isoformat()
+    if current_user.created_at:
+        if isinstance(current_user.created_at, str):
+            formatted_date = current_user.created_at
+        else:
+            formatted_date = current_user.created_at.isoformat()
+    else:
+        formatted_date = None
+
     return {
         "status": "success",
         "message": "Профиль успешно обновлен!",
@@ -127,11 +142,11 @@ async def update_user_profile(
             "id": current_user.id,
             "username": current_user.username,
             "email": current_user.email,
-            "first_name": current_user.first_name,
-            "last_name": current_user.last_name,
-            "phone": current_user.phone,
-            "city": current_user.city,
+            "first_name": current_user.first_name or "",
+            "last_name": current_user.last_name or "",
+            "phone": current_user.phone or "",
+            "city": current_user.city or "",
             "role": current_user.role,
-             "created_at": current_user.created_at.isoformat() if current_user.created_at else None,
+            "created_at": formatted_date
         },
     }
