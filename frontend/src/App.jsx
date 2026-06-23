@@ -19,8 +19,23 @@ function App() {
   // Создаем стейт для хранения данных юзера
   const [user, setUser] = useState(null);
 
+  // Создаем состояние для количества товаров в корзине
+  const [cartCount, setCartCount] = useState(0);
+
   // Этот код срабатывает ОДИН РАЗ сразу при открытии или обновлении сайта
   useEffect(() => {
+
+    // Вспомогательная функция для запроса точного количества товаров
+    const updateCartCount = async () => {
+      try {
+        const cartRes = await axios.get('http://localhost:8000/api/v1/cart/', { withCredentials: true });
+        const totalItems = cartRes.data.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+        setCartCount(totalItems);
+      } catch {
+        setCartCount(0); // Если корзины нет или гость — сбрасываем в 0
+      }
+    };
+
     const fetchUser = async () => {
       try {
         const response = await axios.get('http://localhost:8000/api/v1/users/me', {
@@ -28,19 +43,28 @@ function App() {
         });
         // Если кука правильная, бэкенд вернет юзера, и мы его сохраним
         setUser(response.data);
+
+        // Если юзер залогинен, сразу подтягиваем его счётчик корзины в шапку при старте
+        await updateCartCount();
+
       } catch (err) {
         // Если куки нет или она истекла, просто оставляем user = null
         setUser(null);
+        setCartCount(0);
       }
     };
     fetchUser();
+
+  // Слушатель события для мгновенного обновления цифры при кликах «В корзину»
+    window.addEventListener('cartUpdated', updateCartCount);
+    return () => window.removeEventListener('cartUpdated', updateCartCount);
   }, []); // Пустые скобки значат: "выполни при загрузке"
 
   return (
     <Router>
       <div className="App">
-        {/* Вставляем Шапку и передаем ей юзера */}
-        <Header user={user} setUser={setUser} />
+        {/* Вставляем Шапку и передаем ей юзера и количество товаров в корзине */}
+        <Header user={user} setUser={setUser} cartCount={cartCount} />
 
         <main style={{ padding: '20px', minHeight: '80vh' }}>
           <Routes>

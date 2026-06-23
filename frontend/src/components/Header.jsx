@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import './Header.css';
 
-export const Header = ({ user, setUser }) => {
+export const Header = ({ user, setUser, cartCount }) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -41,7 +41,7 @@ export const Header = ({ user, setUser }) => {
 
             {/* 1. КОРЗИНА */}
             <Link to="/cart" className="header-cart-link" style={{ textDecoration: 'none', color: '#111827', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px', position: 'relative' }}>
-              <span>🛒</span> Корзина
+              <span>🛒</span> Корзина {cartCount > 0 && <strong style={{ color: '#4e73df' }}>({cartCount})</strong>}
             </Link>
 
             {/* 2. ИНФО О ПОЛЬЗОВАТЕЛЕ (Имя стало кликабельной ссылкой на профиль!) */}

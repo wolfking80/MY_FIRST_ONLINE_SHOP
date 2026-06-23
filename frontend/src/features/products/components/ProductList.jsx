@@ -58,6 +58,7 @@ export const ProductList = () => {
     try {
       const response = await addToCart(productId);
       alert(`🛒 Отлично! Товар добавлен в корзину (Всего: ${response.quantity} шт.)`);
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (err) {
       console.error("Ошибка добавления в корзину:", err);
       if (err.response?.status === 401) {

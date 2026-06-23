@@ -41,6 +41,10 @@ export const CartPage = () => {
     try {
       await updateCartItemQuantity(item.id, newQuantity);
       await loadCart(); // Перезапрашиваем точные данные и суммы из СУБД
+      
+      // Сообщаем шапке, что количество изменилось
+      window.dispatchEvent(new Event('cartUpdated'));
+
     } catch (err) {
       alert("Не удалось изменить количество:\n" + (err.response?.data?.detail || err.message));
     }
@@ -53,6 +57,10 @@ export const CartPage = () => {
     try {
       await deleteCartItem(item.id);
       await loadCart(); // Перезапрашиваем корзину из СУБД
+
+      // Сообщаем шапке, что товар полностью удален
+      window.dispatchEvent(new Event('cartUpdated'));
+
     } catch (err) {
       alert("Не удалось удалить товар: " + (err.response?.data?.detail || err.message));
     }

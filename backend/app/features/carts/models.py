@@ -13,7 +13,7 @@ class Cart(Base):
     __tablename__ = "carts"
     
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     status: Mapped[str] = mapped_column(default="active")
     converted_to_order_id: Mapped[int | None] = mapped_column(ForeignKey("orders.id"))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
