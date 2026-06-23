@@ -13,12 +13,16 @@ export const getBrands = async () => {
 };
 
 // Получить список товаров с фильтрацией (для каталога)
-export const getProducts = async (categoryId = null, brandId = null) => {
+export const getProducts = async (filters = {}) => {
   const params = new URLSearchParams();
-  if (categoryId) params.append('category_id', categoryId);
-  if (brandId) params.append('brand_id', brandId);
 
-  const response = await apiClient.get('/products/', { params });
+  if (filters.category_id) params.append('category_id', filters.category_id);
+  if (filters.brand_id) params.append('brand_id', filters.brand_id);
+  if (filters.search) params.append('search', filters.search);
+  if (filters.min_price) params.append('min_price', filters.min_price);
+  if (filters.max_price) params.append('max_price', filters.max_price);
+
+  const response = await apiClient.get(`/products/?${params.toString()}`);
   return response.data;
 };
 

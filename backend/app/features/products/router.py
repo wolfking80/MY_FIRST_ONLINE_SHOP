@@ -38,43 +38,75 @@ async def get_products(
     limit: int = 20,
     category_id: int | None = None,
     brand_id: int | None = None,
+    search: str | None = None,
+    min_price: Decimal | None = None,
+    max_price: Decimal | None = None,
     db: AsyncSession = Depends(get_db),
 ):
-    # Грузим товар + бренд + все картинки
+    # Базовый запрос с подгрузкой бренда и картинок
     query = (
         select(Product)
         .options(
             joinedload(Product.brand),
             selectinload(Product.images),
-            selectinload(Product.variants)
+            selectinload(Product.variants),
         )
         .where(Product.is_active == True)
     )
 
+    # ФИЛЬТРЫ КАТЕГОРИЙ И БРЕНДОВ
     if category_id:
         query = query.where(Product.category_id == category_id)
     if brand_id:
         query = query.where(Product.brand_id == brand_id)
 
-    query = query.offset(skip).limit(limit)
+    # ЖИВОЙ ПОИСК ПО НАЗВАНИЮ (Игнорирует регистр букв)
+    if search:
+        query = query.where(Product.name.ilike(f"%{search}%"))
+
+    # ФИЛЬТР ПО ДИАПАЗОНУ ЦЕН
+    if min_price is not None:
+        query = query.where(Product.base_price >= min_price)
+    if max_price is not None:
+        query = query.where(Product.base_price <= max_price)
+
+    # Пагинация и сортировка (сначала новые)
+    query = query.order_by(Product.id.desc()).offset(skip).limit(limit)
 
     result = await db.execute(query)
-    
-    # unique() обязателен, когда используем joinedload с коллекциями (картинками)
     products = result.unique().scalars().all()
-    
+
+    response_products = []
+
     for prod in products:
-        # Считаем среднее значение рейтинга напрямую из таблицы отзывов
-        rating_stmt = select(func.avg(Review.rating)).where(Review.product_id == prod.id)
+        rating_stmt = select(func.avg(Review.rating)).where(
+            Review.product_id == prod.id
+        )
         rating_res = await db.execute(rating_stmt)
         avg_score = rating_res.scalar()
-        
-        prod.average_rating = float(avg_score) if avg_score is not None else 0.0
-        
-        # Складываем stock всех вариантов этого товара
-        prod.total_stock = sum(int(v.stock) for v in prod.variants) if prod.variants else 0
+        avg_rating = float(avg_score) if avg_score is not None else 0.0
 
-    return products
+        count_stmt = select(func.count(Review.id)).where(Review.product_id == prod.id)
+        count_res = await db.execute(count_stmt)
+        reviews_count = count_res.scalar() or 0
+
+        total_stock = sum(int(v.stock) for v in prod.variants) if prod.variants else 0
+
+        response_products.append(
+            {
+                "id": prod.id,
+                "name": prod.name,
+                "slug": prod.slug,
+                "base_price": prod.base_price,
+                "average_rating": avg_rating,
+                "brand": prod.brand,
+                "images": prod.images,
+                "reviews_count": reviews_count,
+                "total_stock": total_stock,
+            }
+        )
+
+    return response_products
 
 
 # Создаем мини-схему для валидации входящих вариантов прямо внутри JSON

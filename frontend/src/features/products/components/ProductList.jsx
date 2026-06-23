@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import apiClient from '../../../shared/api/client'; // Централизованный клиент
-import { getCategories, getBrands } from '../api'; // Подключаем функции из api.js
+import { getProducts } from '../api';
 import { addToCart } from '../../cart/api';
 import './ProductList.css';
 
@@ -9,58 +8,51 @@ export const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Стейты для хранения списков фильтров
-  const [categories, setCategories] = useState([]);
-  const [brands, setBrands] = useState([]);
+  // Стейты для фильтрации и живого поиска
+  const [searchQuery, setSearchQuery] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
 
-  // Стейты для выбранных пользователем фильтров
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedBrand, setSelectedBrand] = useState('');
-
-  // Загружаем категории и бренды один раз при открытии страницы
-  useEffect(() => {
-    const loadFilters = async () => {
-      try {
-        const catData = await getCategories();
-        const brandData = await getBrands();
-        setCategories(catData);
-        setBrands(brandData);
-      } catch (error) {
-        console.error("Ошибка при загрузке фильтров каталога:", error);
-      }
-    };
-    loadFilters();
-  }, []);
-
-  // Загружаем товары каждый раз, когда меняются выбранные фильтры
-  useEffect(() => {
-    const fetchProducts = async () => {
+  // Функция загрузки товаров с учетом выставленных параметров
+  const loadCatalog = async () => {
+    try {
       setLoading(true);
-      try {
-        // Формируем query-параметры динамически, как ожидает FastAPI роут GET /
-        const params = {};
-        if (selectedCategory) params.category_id = selectedCategory;
-        if (selectedBrand) params.brand_id = selectedBrand;
+      const data = await getProducts({
+        search: searchQuery,
+        min_price: minPrice,
+        max_price: maxPrice
+      });
+      setProducts(data);
+    } catch (err) {
+      console.error("Ошибка при загрузке товаров:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        // Делаем запрос через apiClient к эндпоинту /products/
-        const response = await apiClient.get('/products/', { params });
-        setProducts(response.data);
-      } catch (error) {
-        console.error("Ошибка при загрузке товаров:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, [selectedCategory, selectedBrand]); // Следим за изменением фильтров
+  // Автоматически перезапускаем поиск при вводе текста или изменении цен
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      loadCatalog();
+    }, 400); // Небольшая задержка в 400мс, чтобы не спамить базу при каждой нажатой букве
 
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery, minPrice, maxPrice]);
+
+  // Добавление в корзину прямо с витрины
   const handleBuyClick = async (productId) => {
     try {
-      const response = await addToCart(productId);
+      // Ищем первый доступный ID варианта (размера/цвета) этого товара
+      const prod = products.find(p => p.id === productId);
+      // Если вариантов нет или бэкенд их не отдал, шлем null, бэкенд подставит дефолт
+      const variantId = prod?.variants && prod.variants.length > 0 ? prod.variants[0].id : null;
+
+      const response = await addToCart(productId, variantId);
       alert(`🛒 Отлично! Товар добавлен в корзину (Всего: ${response.quantity} шт.)`);
+
+      // Генерируем браузерное событие для мгновенного обновления счетчика в шапке сайта
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (err) {
-      console.error("Ошибка добавления в корзину:", err);
       if (err.response?.status === 401) {
         alert("Чтобы добавить товар в корзину, необходимо войти в свой аккаунт! 👤");
       } else {
@@ -69,118 +61,133 @@ export const ProductList = () => {
     }
   };
 
+  // Быстрый сброс всех фильтров в ноль
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setMinPrice('');
+    setMaxPrice('');
+  };
+
   return (
-    <div className="catalog-container" style={{ padding: '20px' }}>
+    <div className="catalog-main-layout">
 
-      {/* ПАНЕЛЬ ФИЛЬТРОВ */}
-      <div className="filters-panel" style={{ display: 'flex', gap: '15px', marginBottom: '30px', alignItems: 'center' }}>
+      {/* 🔍 ЛЕВАЯ КОЛОНКА: ПАНЕЛЬ УПРАВЛЕНИЯ ФИЛЬТРАМИ */}
+      <aside className="filters-sidebar-box">
 
-        {/* Выбор категории */}
-        <select
-          className="modern-select"
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', cursor: 'pointer' }}
+        {/* Поиск по названию */}
+        <div className="filter-section-group">
+          <h4 className="filter-group-title">🔍 Живой Поиск</h4>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Название товара..."
+            className="input-filter-price"
+            style={{ width: '100%', boxSizing: 'border-box' }}
+          />
+        </div>
+
+        {/* Диапазон цен */}
+        <div className="filter-section-group">
+          <h4 className="filter-group-title">💰 Цена, ₽</h4>
+          <div className="filter-price-inputs-row">
+            <input
+              type="number"
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+              placeholder="От"
+              className="input-filter-price"
+            />
+            <input
+              type="number"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+              placeholder="До"
+              className="input-filter-price"
+            />
+          </div>
+        </div>
+
+        {/* Кнопка сброса */}
+        <button
+          type="button"
+          onClick={handleResetFilters}
+          className="btn-reset-all-filters"
         >
-          <option value="">Все категории</option>
-          {categories.map(cat => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-        </select>
+          🔄 Сбросить фильтры
+        </button>
+      </aside>
 
-        {/* Выбор бренда */}
-        <select
-          className="modern-select"
-          value={selectedBrand}
-          onChange={(e) => setSelectedBrand(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', cursor: 'pointer' }}
-        >
-          <option value="">Все бренды</option>
-          {brands.map(brand => (
-            <option key={brand.id} value={brand.id}>{brand.name}</option>
-          ))}
-        </select>
+      {/* 📦 ПРАВАЯ КОЛОНКА: СЕТКА ВИТРИНЫ ТОВАРОВ */}
+      <main>
+        {loading ? (
+          <div style={{ padding: '40px', textAlign: 'center', fontWeight: '700' }}>Загрузка товаров...</div>
+        ) : products.length === 0 ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: '#858796', fontStyle: 'italic' }}>
+            По вашему запросу ничего не найдено 😔 Попробуйте изменить параметры фильтров.
+          </div>
+        ) : (
+          <div className="products-grid">
+            {products.map((product) => {
+              const hasImage = product.images && product.images.length > 0;
+              const imageUrl = hasImage
+                ? `http://localhost:8000${product.images[0].url}`
+                : 'https://placeholder.com';
 
-        {/* Кнопка сброса (показывается, если хоть один фильтр активен) */}
-        {(selectedCategory || selectedBrand) && (
-          <button
-            onClick={() => { setSelectedCategory(''); setSelectedBrand(''); }}
-            style={{ padding: '8px 16px', cursor: 'pointer', borderRadius: '4px', background: '#f0f0f0', border: '1px solid #ccc' }}
-          >
-            Сбросить
-          </button>
+              return (
+                <div key={product.id} className="product-card">
+                  <Link to={`/products/${product.slug}`} className="product-image-link">
+                    <img src={imageUrl} alt={product.name} className="product-card-image" />
+                  </Link>
+
+                  <div className="product-info">
+                    {/* Бренд */}
+                    <span className="product-brand-badge">
+                      {product.brand?.name || 'Без бренда'}
+                    </span>
+
+                    {/* ⭐ ОТОБРАЖЕНИЕ РЕЙТИНГА И ЗВЕЗДОЧЕК */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '13px', color: '#f59e0b', marginBottom: '6px' }}>
+                      {'★'.repeat(product.average_rating ? Math.round(parseFloat(product.average_rating)) : 0)}
+                      {'☆'.repeat(5 - (product.average_rating ? Math.round(parseFloat(product.average_rating)) : 0))}
+
+                      <span style={{ color: '#858796', fontSize: '11px', marginLeft: '4px' }}>
+                        ({product.reviews_count || 0})
+                      </span>
+                    </div>
+
+                    {/* Название */}
+                    <Link to={`/products/${product.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <h4 className="product-name" style={{ margin: '0 0 8px 0', fontSize: '15px' }}>{product.name}</h4>
+                    </Link>
+
+                    {/* Цена */}
+                    <div className="product-price-row">
+                      <span className="product-price">{Number(product.base_price).toLocaleString()} ₽</span>
+                    </div>
+
+                    {/* Динамическая кнопка в зависимости от total_stock */}
+                    {product.total_stock > 0 ? (
+                      <button className="add-to-cart-btn" onClick={() => handleBuyClick(product.id)}>
+                        <span>🛒</span> В корзину
+                      </button>
+                    ) : (
+                      <button
+                        className="add-to-cart-btn"
+                        disabled
+                        style={{ backgroundColor: '#4b5563', color: '#9ca3af', cursor: 'not-allowed' }}
+                      >
+                        <span>❌</span> Нет в наличии
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
-      </div>
+      </main>
 
-      {/* ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ */}
-      {loading ? (
-        <div className="loading">Загрузка товаров...</div>
-      ) : products.length === 0 ? (
-        <div className="no-products" style={{ textAlign: 'center', marginTop: '40px', color: '#666' }}>
-          Товары с такими фильтрами не найдены 😔
-        </div>
-      ) : (
-        <div className="product-grid">
-          {products.map((product) => (
-            <div key={product.id} className="product-card">
-
-              {/* Ссылка-переход по клику на изображение товара */}
-              <Link to={`/products/${product.slug}`} style={{ textDecoration: 'none', display: 'block' }}>
-                <div className="product-image-container">
-                  <img
-                    className="product-image"
-                    src={
-                      product.images && product.images.length > 0
-                        ? `http://localhost:8000${product.images[0].url}`
-                        : 'https://placeholder.com'
-                    }
-                    alt={product.name}
-                  />
-                </div>
-              </Link>
-
-              <div className="product-info">
-                {/* Отображение привязанного к товару бренда */}
-                <span style={{ fontSize: '11px', color: '#858796', textTransform: 'uppercase', fontWeight: '700', display: 'block', marginBottom: '4px' }}>
-                  {product.brand?.name || 'Без бренда'}
-                </span>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '13px', color: '#f59e0b', marginBottom: '6px' }}>
-                  {/* Закрашенные звезды (если рейтинга нет — будет 0) */}
-                  {'★'.repeat(product.average_rating ? Math.round(parseFloat(product.average_rating)) : 0)}
-                  {/* Серые контуры звезд */}
-                  {'☆'.repeat(5 - (product.average_rating ? Math.round(parseFloat(product.average_rating)) : 0))}
-                  {/* Количество отзывов */}
-                  <span style={{ color: '#858796', fontSize: '11px', marginLeft: '4px' }}>
-                    ({product.average_rating > 0 ? 1 : 0})
-                  </span>
-                </div>
-
-                {/* Ссылка-переход по клику на название товара */}
-                <Link to={`/products/${product.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <h4 className="product-name" style={{ margin: '0 0 8px 0', fontSize: '15px' }}>{product.name}</h4>
-                </Link>
-
-                <p className="product-price">{Number(product.base_price).toLocaleString()} ₽</p>
-                {/* Динамическая кнопка: если остаток 0 — блокируем её */}
-                {product.total_stock > 0 ? (
-                  <button className="add-to-cart-btn" onClick={() => handleBuyClick(product.id)}>
-                    <span>🛒</span> В корзину
-                  </button>
-                ) : (
-                  <button
-                    className="add-to-cart-btn"
-                    disabled
-                    style={{ backgroundColor: '#4b5563', color: '#9ca3af', cursor: 'not-allowed' }}
-                  >
-                    <span>❌</span> Нет в наличии
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 };

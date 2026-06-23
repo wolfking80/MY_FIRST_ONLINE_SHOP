@@ -127,3 +127,79 @@
   background-position: right 12px center;
   font-size: 14px;
 }
+
+/* Главная сетка каталога */
+.catalog-main-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 30px;
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+/* Боковая панель фильтров */
+.filters-sidebar-box {
+  background-color: #ffffff;
+  border: 1px solid #e3e6f0;
+  border-radius: 12px;
+  padding: 20px;
+  height: fit-content;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+
+.filter-section-group {
+  margin-bottom: 20px;
+  border-bottom: 1px dashed #e3e6f0;
+  padding-bottom: 15px;
+}
+.filter-section-group:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.filter-group-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 10px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Поле цен */
+.filter-price-inputs-row {
+  display: flex;
+  gap: 10px;
+}
+
+.input-filter-price {
+  width: 100%;
+  padding: 8px 10px;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #000;
+}
+.input-filter-price:focus {
+  border-color: #4e73df;
+  outline: none;
+}
+
+/* Кнопка сброса */
+.btn-reset-all-filters {
+  width: 100%;
+  padding: 10px;
+  background-color: #eaedf7;
+  color: #4e73df;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+.btn-reset-all-filters:hover {
+  background-color: #4e73df;
+  color: white;
+}
