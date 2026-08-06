@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getProducts } from '../api';
+import { getProducts, toggleFavoriteProduct, getUserFavorites } from '../api';
 import { addToCart } from '../../cart/api';
 import './ProductList.css';
 
 export const ProductList = () => {
   const [products, setProducts] = useState([]);
+  const [favoriteIds, setFavoriteIds] = useState([]); 
   const [loading, setLoading] = useState(true);
 
   // Стейты для фильтрации и живого поиска
@@ -30,6 +31,22 @@ export const ProductList = () => {
     }
   };
 
+// Загружаем список ID избранных товаров для текущего юзера
+  const loadFavorites = async () => {
+    try {
+      const favProducts = await getUserFavorites();
+      setFavoriteIds(favProducts.map(p => p.id)); // Сохраняем только массив ID [12, 55, ...]
+    } catch {
+      setFavoriteIds([]); // Если гость или ошибка — оставляем пустым
+    }
+  };
+
+  // Стартовая загрузка каталога и избранного
+  useEffect(() => {
+    loadFavorites();
+  }, []);
+
+
   // Автоматически перезапускаем поиск при вводе текста или изменении цен
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -38,6 +55,26 @@ export const ProductList = () => {
 
     return () => clearTimeout(delayDebounce);
   }, [searchQuery, minPrice, maxPrice]);
+
+
+  // Функция клика по сердечку (Добавить / Удалить)
+  const handleFavoriteClick = async (productId) => {
+    try {
+      const response = await toggleFavoriteProduct(productId);
+      if (response.is_favorite) {
+        setFavoriteIds([...favoriteIds, productId]); // Добавляем в стейт, сердечко загорится красным
+      } else {
+        setFavoriteIds(favoriteIds.filter(id => id !== productId)); // Удаляем, сердечко потухнет
+      }
+    } catch (err) {
+      if (err.response?.status === 401) {
+        alert("Чтобы добавлять товары в избранное, нужно войти в аккаунт! 👤");
+      } else {
+        alert("Не удалось изменить статус избранного: " + (err.response?.data?.detail || err.message));
+      }
+    }
+  };
+
 
   // Добавление в корзину прямо с витрины
   const handleBuyClick = async (productId) => {
@@ -134,8 +171,21 @@ export const ProductList = () => {
                 ? `http://localhost:8000${product.images[0].url}`
                 : 'https://placeholder.com';
 
+              const isFav = favoriteIds.includes(product.id); // Проверяем, лайкнут ли товар  
+
               return (
                 <div key={product.id} className="product-card">
+
+                  {/* КНОПКА-СЕРДЕЧКО НАД ФОТО */}
+                  <button 
+                    type="button" 
+                    onClick={() => handleFavoriteClick(product.id)}
+                    className={`btn-favorite-toggle ${isFav ? 'active' : ''}`}
+                    title={isFav ? "Удалить из избранного" : "Добавить в избранное"}
+                  >
+                    {isFav ? '❤️' : '🤍'}
+                  </button>
+
                   <Link to={`/products/${product.slug}`} className="product-image-container">
                     <img src={imageUrl} alt={product.name} className="product-image" />
                   </Link>

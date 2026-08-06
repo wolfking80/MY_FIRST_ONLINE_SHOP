@@ -39,12 +39,17 @@ export const Header = ({ user, setUser, cartCount }) => {
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
 
-            {/* 1. КОРЗИНА */}
+            {/* ИЗБРАННОЕ */}
+            <Link to="/favorites" style={{ textDecoration: 'none', color: '#111827', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ color: '#e74a3b' }}>❤️</span> Избранное
+            </Link>
+
+            {/* КОРЗИНА */}
             <Link to="/cart" className="header-cart-link" style={{ textDecoration: 'none', color: '#111827', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px', position: 'relative' }}>
               <span>🛒</span> Корзина {cartCount > 0 && <strong style={{ color: '#4e73df' }}>({cartCount})</strong>}
             </Link>
 
-            {/* 2. ИНФО О ПОЛЬЗОВАТЕЛЕ (Имя стало кликабельной ссылкой на профиль!) */}
+            {/* ИНФО О ПОЛЬЗОВАТЕЛЕ (Имя стало кликабельной ссылкой на профиль!) */}
             <div className="user-info" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Link
                 to="/profile"

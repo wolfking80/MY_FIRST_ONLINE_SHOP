@@ -90,3 +90,16 @@ export const addProductReview = async (productId, rating, text) => {
   });
   return response.data;
 };
+
+
+// Переключить статус избранного (добавить/удалить)
+export const toggleFavoriteProduct = async (productId) => {
+  const response = await apiClient.post(`/favorites/toggle/${productId}`);
+  return response.data;
+};
+
+// Получить все избранные товары текущего пользователя
+export const getUserFavorites = async () => {
+  const response = await apiClient.get('/favorites/');
+  return response.data;
+};

@@ -6,6 +6,7 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { AdminDashboard } from './features/admin/components/AdminDashboard';
 import { AddProductForm } from './features/admin/components/AddProductForm';
+import { FavoritesPage } from './features/products/components/FavoritesPage';
 import { ProductList } from './features/products/components/ProductList';
 import { Profile } from './features/users/components/Profile';
 import { RegisterForm } from './features/users/components/RegisterForm'; // Импорт формы регистрации
@@ -76,6 +77,7 @@ function App() {
             <Route path="/admin/*" element={<AdminDashboard user={user} />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/products/:slug" element={<ProductDetailsPage />} />
+            <Route path="/favorites" element={<FavoritesPage />} />
           </Routes>
         </main>
 

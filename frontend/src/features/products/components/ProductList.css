@@ -10,6 +10,7 @@
 
 /* Сама карточка товара */
 .product-card {
+    position: relative;
     background: #fff;
     border-radius: 12px;
     overflow: hidden;
@@ -202,4 +203,34 @@
 .btn-reset-all-filters:hover {
   background-color: #4e73df;
   color: white;
+}
+
+
+/* Кнопка-сердечко */
+.btn-favorite-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.btn-favorite-toggle:hover {
+  transform: scale(1.1);
+  background: #ffffff;
+}
+
+.btn-favorite-toggle.active {
+  color: #e74a3b;
 }
