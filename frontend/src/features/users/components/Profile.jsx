@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { payOrder } from '../../orders/api';
 import { useNavigate } from 'react-router-dom';
 import { getMe, logoutUser, updateUserProfile, getUserOrders } from '../api';
 import './Profile.css';
@@ -15,6 +16,10 @@ export const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const navigate = useNavigate();
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [selectedOrderToPay, setSelectedOrderToPay] = useState(null);
+  const [cardForm, setCardForm] = useState({ number: '', expiry: '', cvc: '' });
+
 
   // Глобальная загрузка данных пользователя и его заказов при открытии страницы
   useEffect(() => {
@@ -85,6 +90,26 @@ export const Profile = () => {
 
   if (loading) return <div style={{ padding: '50px', textAlign: 'center', fontWeight: '600' }}>Загрузка личного кабинета...</div>;
   if (!user) return null;
+
+
+  const handlePaymentSubmit = async (e) => {
+    e.preventDefault();
+    if (!cardForm.number || !cardForm.expiry || !cardForm.cvc) {
+      alert("Пожалуйста, заполните все поля банковской карты!");
+      return;
+    }
+    try {
+      await payOrder(selectedOrderToPay);
+      alert("🎉 Оплата прошла успешно! Деньги списаны, статус заказа обновлен.");
+      setIsPayModalOpen(false);
+      setCardForm({ number: '', expiry: '', cvc: '' });
+
+      // Мгновенно перезагружаем данные профиля, чтобы плашка переключилась в "Оплачен"
+      window.location.reload();
+    } catch (err) {
+      alert("Ошибка платежной системы: " + (err.response?.data?.detail || err.message));
+    }
+  };
 
   return (
     <div className="profile-container">
@@ -157,18 +182,18 @@ export const Profile = () => {
               <div key={order.id} style={{ border: '1px solid #e3e6f0', borderRadius: '8px', padding: '15px', background: '#f8f9fa' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontWeight: '700' }}>
                   <span style={{ color: '#4e73df' }}>Заказ №{order.id} от {new Date(order.created_at).toLocaleDateString()}</span>
-                  
-                  <span style={{ 
-                    padding: '4px 10px', 
-                    borderRadius: '6px', 
-                    fontSize: '12px', 
+
+                  <span style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
                     color: '#fff',
                     fontWeight: '700',
-                    backgroundColor: 
-                      order.status === 'delivered' ? '#1cc88a' : 
-                      order.status === 'pending' ? '#f6c23e' : 
-                      order.status === 'confirmed' ? '#4e73df' : 
-                      order.status === 'shipped' ? '#36b9cc' : '#e74a3b'
+                    backgroundColor:
+                      order.status === 'delivered' ? '#1cc88a' :
+                        order.status === 'pending' ? '#f6c23e' :
+                          order.status === 'confirmed' ? '#4e73df' :
+                            order.status === 'shipped' ? '#36b9cc' : '#e74a3b'
                   }}>
                     {order.status === 'pending' && '⏳ Обрабатывается'}
                     {order.status === 'confirmed' && '📦 Подтвержден'}
@@ -188,6 +213,26 @@ export const Profile = () => {
                   ))}
                 </div>
 
+                {/* БЛОК ОПЛАТЫ И КНОПКА */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', padding: '10px 0', borderTop: '1px dashed #e3e6f0' }}>
+                  <div>
+                    <span style={{ fontSize: '13px', color: order.payment_status === 'paid' ? '#1cc88a' : '#f6c23e', fontWeight: '600' }}>
+                      {order.payment_status === 'paid' ? '✓ Оплачен' : '💳 Ожидает оплаты'}
+                    </span>
+                  </div>
+
+                  {/* Кнопка "Оплатить" показывается только если заказ не оплачен и не отменен */}
+                  {order.payment_status !== 'paid' && order.status !== 'cancelled' && (
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedOrderToPay(order.id); setIsPayModalOpen(true); }}
+                      style={{ padding: '6px 14px', backgroundColor: '#4e73df', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '700', fontSize: '13px', cursor: 'pointer', transition: 'background 0.2s' }}
+                    >
+                      💳 Оплатить заказ
+                    </button>
+                  )}
+                </div>
+
                 <div style={{ textAlign: 'right', marginTop: '10px', fontWeight: '700', color: '#111827' }}>
                   Итоговая сумма: <span style={{ color: '#1cc88a' }}>{Number(order.total_amount).toLocaleString()} ₽</span>
                 </div>
@@ -196,6 +241,38 @@ export const Profile = () => {
           </div>
         )}
       </div>
+
+      {/* МОДАЛЬНОЕ ОКНО СИМУЛЯЦИИ БАНКОВСКОГО ПЛАТЕЖА */}
+      {isPayModalOpen && (
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="modal-content" style={{ background: '#fff', padding: '25px', borderRadius: '12px', width: '360px', position: 'relative', color: '#111827' }}>
+            <button onClick={() => setIsPayModalOpen(false)} style={{ position: 'absolute', top: '10px', right: '15px', background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+
+            <h3 style={{ margin: '0 0 5px 0', color: '#111827' }}>💳 Безопасная оплата</h3>
+            <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#858796' }}>Заказ №{selectedOrderToPay}. Симуляция шлюза интернет-эквайринга.</p>
+
+            <form onSubmit={handlePaymentSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <label style={{ fontWeight: '600', fontSize: '13px' }}>Номер карты:</label>
+              <input type="text" required maxLength="19" placeholder="4276 0000 0000 0000" value={cardForm.number} onChange={(e) => setCardForm({ ...cardForm, number: e.target.value })} style={{ padding: '10px', border: '2px solid #e5e7eb', borderRadius: '6px', color: '#000' }} />
+
+              <div style={{ display: 'flex', gap: '15px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontWeight: '600', fontSize: '13px', display: 'block', marginBottom: '4px' }}>Срок действия:</label>
+                  <input type="text" required maxLength="5" placeholder="MM/YY" value={cardForm.expiry} onChange={(e) => setCardForm({ ...cardForm, expiry: e.target.value })} style={{ padding: '10px', border: '2px solid #e5e7eb', borderRadius: '6px', width: '100%', boxSizing: 'border-box', color: '#000' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontWeight: '600', fontSize: '13px', display: 'block', marginBottom: '4px' }}>CVC / CVV:</label>
+                  <input type="password" required maxLength="3" placeholder="***" value={cardForm.cvc} onChange={(e) => setCardForm({ ...cardForm, cvc: e.target.value })} style={{ padding: '10px', border: '2px solid #e5e7eb', borderRadius: '6px', width: '100%', boxSizing: 'border-box', color: '#000' }} />
+                </div>
+              </div>
+
+              <button type="submit" style={{ padding: '12px', backgroundColor: '#1cc88a', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '700', fontSize: '15px', cursor: 'pointer', marginTop: '15px' }}>
+                🚀 Списать средства
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

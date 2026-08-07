@@ -1,10 +1,11 @@
-import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.features.orders.models import Order, OrderItem
 from app.core.database import get_db
@@ -150,3 +151,44 @@ async def get_my_orders(
     result = await db.execute(query)
     orders = result.scalars().all()
     return orders
+
+
+@router.post("/{order_id}/pay", status_code=200)
+async def pay_order_simulation(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Ищем заказ текущего пользователя
+    query = select(Order).where(Order.id == order_id, Order.user_id == current_user.id)
+    result = await db.execute(query)
+    order = result.scalars().first()
+
+    if not order:
+        raise HTTPException(status_code=404, detail="Заказ не найден или у вас нет к нему доступа")
+
+    if order.payment_status == "paid":
+        return {"status": "success", "message": "Заказ уже был оплачен ранее"}
+
+    current_time = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    # Меняем финансовые статусы
+    order.payment_status = "paid"
+    order.paid_at = current_time
+    
+    # Если заказ был в ожидании сборки, продвигаем его логистически
+    if order.status == "pending":
+        order.status = "confirmed" # Переводим в статус "Подтвержден/Оплачен"
+
+    # Логируем оплату в JSON-историю status_history вашей модели
+    current_log = list(order.status_history) if order.status_history else []
+    current_log.append({
+        "status": "paid",
+        "at": current_time.isoformat(),
+        "by": "system_payment"
+    })
+    order.status_history = current_log
+    flag_modified(order, "status_history") # Маркируем изменение JSON для SQLAlchemy
+
+    await db.commit()
+    return {"status": "success", "message": "Заказ успешно оплачен! 💳"}

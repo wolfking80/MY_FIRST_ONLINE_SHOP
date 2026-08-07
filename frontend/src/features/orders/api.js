@@ -12,3 +12,10 @@ export const checkoutOrder = async (orderData) => {
   const response = await apiClient.post('/orders/checkout', orderData);
   return response.data;
 };
+
+
+// Симуляция отправки успешной оплаты заказа по его ID
+export const payOrder = async (orderId) => {
+  const response = await apiClient.post(`/orders/${orderId}/pay`);
+  return response.data;
+};
