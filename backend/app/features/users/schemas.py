@@ -76,6 +76,7 @@ class UserOut(UserBase):
     is_active: bool
     role: str
     is_blocked: bool
+    avatar_url: str | None = None
     
     
 class UserShort(BaseModel):

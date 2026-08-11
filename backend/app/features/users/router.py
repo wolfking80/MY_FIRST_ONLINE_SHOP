@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, status
+import os
+import uuid
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -95,14 +98,6 @@ async def delete_user(
     return None
 
 
-# Схема для валидации входящих данных обновления профиля
-class UserUpdateInput(BaseModel):
-    first_name: str | None = None
-    last_name: str | None = None
-    phone: str | None = None
-    city: str | None = None
-
-
 @router.put("/profile/update", status_code=200)
 async def update_user_profile(
     payload: schemas.UserUpdate,
@@ -149,4 +144,48 @@ async def update_user_profile(
             "role": current_user.role,
             "created_at": formatted_date
         },
+    }
+
+
+@router.post("/profile/avatar", status_code=200)
+async def upload_user_avatar(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # Защита: проверяем, что прилетел именно графический файл
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Файл должен быть изображением (png, jpg, webp)!")
+
+    # Создаем системную директорию для хранения аватарок, если её ещё нет
+    # Путь будет вести в папку backend/static/avatars/
+    UPLOAD_DIR = os.path.join("static", "avatars")
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    # Генерируем уникальное имя файла через UUID, чтобы избежать совпадений
+    file_extension = os.path.splitext(file.filename)[1] # Достаем расширение (например, .jpg)
+    unique_filename = f"{uuid.uuid4()}{file_extension}"
+    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+
+    # Читаем файл из памяти кусками и записываем на жесткий диск сервера
+    try:
+        contents = await file.read()
+        with open(file_path, "wb") as f:
+            f.write(contents)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка при сохранении файла на сервере: {str(e)}")
+    finally:
+        await file.close()
+
+    # Обновляем относительный путь в колонке avatar_url текущего пользователя
+    # В базу пишем путь со слэшем в начале, например: /static/avatars/уникальный_ид.jpg
+    relative_url = f"/{UPLOAD_DIR}/{unique_filename}".replace("\\", "/") # Защита от Windows-слэшей
+    current_user.avatar_url = relative_url
+
+    await db.commit()
+
+    return {
+        "status": "success",
+        "message": "Аватар успешно обновлен!",
+        "avatar_url": relative_url
     }

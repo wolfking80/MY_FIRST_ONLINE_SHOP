@@ -10,8 +10,7 @@ import './Profile.css';
 
 const API_BASE_URL = 'http://localhost:8000';
 
-export const Profile = () => {
-  const [user, setUser] = useState(null);
+export const Profile = ({ user, setUser }) => {
   const [orders, setOrders] = useState([]); // Стейт для хранения истории покупок
   const [formData, setFormData] = useState({
     first_name: '',
@@ -33,36 +32,48 @@ export const Profile = () => {
   useEffect(() => {
     const loadProfileData = async () => {
       try {
-        setLoading(true);
-        // 1. Получаем текущую сессию пользователя
-        const userData = await getMe();
-        setUser(userData);
+        setLoading(true); // Включаем лоадер перед стартом
 
-        // Предзаполняем поля формы редактирования
-        setFormData({
-          first_name: userData.first_name || '',
-          last_name: userData.last_name || '',
-          phone: userData.phone || '',
-          city: userData.city || ''
-        });
+        // Изолированный запрос сессии пользователя
+        let userData = null;
+        try {
+          userData = await getMe();
+          setUser(userData);
+        } catch (meErr) {
+          console.error("Ошибка проверки сессии getMe:", meErr);
+          navigate('/login', { replace: true });
+          return; // Если сессии нет — прерываем выполнение
+        }
 
-        // Сразу же стягиваем историю его заказов из PostgreSQL
+        // Если юзер успешно получен, предзаполняем поля анкеты
+        if (userData) {
+          setFormData({
+            first_name: userData.first_name || '',
+            last_name: userData.last_name || '',
+            phone: userData.phone || '',
+            city: userData.city || ''
+          });
+        }
+
+        // Изолированный запрос истории заказов покупателя
         try {
           const ordersData = await getUserOrders();
           setOrders(ordersData);
         } catch (orderErr) {
-          console.error("Не удалось подгрузить заказы:", orderErr);
+          console.error("У пользователя пока нет заказов в PostgreSQL:", orderErr);
+          setOrders([]); // Если заказов нет — оставляем чистый массив
         }
 
       } catch (err) {
-        console.error("Ошибка авторизации профиля:", err);
-        navigate('/login'); // Если токен протух — отправляем авторизоваться
+        console.error("Общий сбой загрузки профиля:", err);
       } finally {
-        setLoading(false);
+        // Выключаем лоадер в любом случае, даже если картинка удалена на сервере!
+        setLoading(false); 
       }
     };
+
     loadProfileData();
-  }, [navigate]);
+  }, [navigate, setUser]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -91,7 +102,7 @@ export const Profile = () => {
 
     try {
       setAvatarLoading(true); // Включаем шестеренку/лоадер внутри круга
-      
+
       // Шлем файл на сервер
       const response = await axios.post(`${API_BASE_URL}/api/v1/users/profile/avatar`, uploadData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -99,10 +110,16 @@ export const Profile = () => {
       });
 
       alert("🎉 Аватар успешно загружен и обновлен!");
-      
+
       // Обновляем стейт юзера, чтобы картинка мгновенно прорисовалась на экране
-      setUser(prev => ({ ...prev, avatar_url: response.data.avatar_url }));
-      
+      const newAvatarPath = response.data.avatar_url;
+      if (newAvatarPath) {
+        setUser(prev => ({
+          ...prev,
+          avatar_url: newAvatarPath
+        }));
+      }
+
     } catch (err) {
       alert("Не удалось загрузить фото: " + (err.response?.data?.detail || err.message));
     } finally {
@@ -163,6 +180,18 @@ export const Profile = () => {
     }
   };
 
+  // Точечный фикс: функция на случай, если картинка сломается или удалится на сервере
+  const handleImageError = (e) => {
+    e.target.style.display = 'none'; // Просто скрываем саму сломанную картинку
+
+    // Вместо стирания innerText, находим или создаем резервную текстовую заглушку
+    const placeholder = e.target.parentNode.querySelector('.avatar-placeholder-text');
+    if (placeholder) {
+      placeholder.style.display = 'block'; // Показываем букву, если она была скрыта
+    }
+  };
+
+
   return (
     <div className="profile-container">
       <h2 className="profile-title">👤 Личный кабинет пользователя</h2>
@@ -174,26 +203,30 @@ export const Profile = () => {
           <div className="profile-header-meta">
 
             {/* Круглая аватарка: если есть фото — показываем его, если нет — первую букву */}
-            <div className="profile-avatar-circle" style={{ position: 'relative', overflow: 'hidden' }}>
-              {user.avatar_url ? (
-                <img src={`${API_BASE_URL}${user.avatar_url}`} alt="Аватар" onError={handleImageError} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div className="profile-avatar-circle" style={{ position: 'relative', overflow: 'hidden', background: '#4e73df', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: '700', borderRadius: '50%', width: '80px', height: '80px' }}>
+              {avatarLoading ? (
+                <span style={{ fontSize: '11px' }}>⚙️...</span>
               ) : (
-                user.username ? user.username[0] : 'U'
+                <>
+                  {user.avatar_url && (
+                    <img 
+                      src={`${API_BASE_URL}${user.avatar_url}`} 
+                      alt="Аватар" 
+                      onError={handleImageError} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 2 }} 
+                    />
+                  )}
+                  {/* Текстовая заглушка с буквой теперь лежит на нижнем слое и подстрахует при ошибке 404 */}
+                  <span className="avatar-placeholder-text" style={{ position: 'relative', zIndex: 1 }}>
+                    {user.username ? user.username[0].toUpperCase() : 'U'}
+                  </span>
+                </>
               )}
-              {/* Скрытый инпут для загрузки файла кликом по аватарке (задел на будущее) */}
-              <label htmlFor="avatar-file-input" style={{
-                 position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '10px', textAlign: 'center', padding: '3px 0', cursor: 'pointer', opacity: 0, transition: 'opacity 0.2s' 
-                 }} 
-                 className="avatar-hover-label">фото</label>
-
-                 <input 
-                type="file" 
-                id="avatar-file-input" 
-                onChange={handleAvatarUpload} 
-                accept="image/*" 
-                style={{ display: 'none' }} 
-              />
-
+              
+              <label htmlFor="avatar-file-input" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '10px', textAlign: 'center', padding: '3px 0', cursor: 'pointer', transition: 'opacity 0.2s', zIndex: 3 }} className="avatar-hover-label">
+                фото
+              </label>
+              <input type="file" id="avatar-file-input" onChange={handleAvatarUpload} accept="image/*" style={{ display: 'none' }} />
             </div>
 
             <div>
