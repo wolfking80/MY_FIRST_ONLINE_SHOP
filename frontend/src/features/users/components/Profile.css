@@ -114,3 +114,16 @@
   color: #111827;
   font-weight: 800;
 }
+
+/* ЭФФЕКТ НАВЕДЕНИЯ НА АВАТАРКУ */
+
+/* По умолчанию плашка с надписью "фото" полностью прозрачна */
+.profile-avatar-circle .avatar-hover-label {
+  opacity: 0 !important;
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* Когда наводим мышку на круг, плашка плавно проявляется */
+.profile-avatar-circle:hover .avatar-hover-label {
+  opacity: 1 !important;
+}

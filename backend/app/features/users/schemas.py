@@ -1,4 +1,5 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
+import re
+from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
 from datetime import datetime
 
 # Общие поля для всех схем
@@ -28,7 +29,44 @@ class UserUpdate(BaseModel):
     phone: str | None = None
     city: str | None = None
     is_blocked: bool | None = None
-    role: str | None = None    
+    role: str | None = None
+    
+    
+# Валидация Имени и Фамилии
+    @field_validator("first_name", "last_name")
+    @classmethod
+    def validate_names(cls, value: str | None) -> str | None:
+        if value is None: return None
+        cleaned = value.strip()
+        if not cleaned: return None
+        
+        if not re.match(r"^[A-Za-zА-Яа-яЁё\s-]+$", cleaned):
+            raise ValueError("Имя и Фамилия могут содержать только буквы, пробелы и дефис!")
+        return cleaned
+
+    # Валидация телефона
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, value: str | None) -> str | None:
+        if value is None: return None
+        cleaned = value.strip().replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+        if not cleaned: return None
+        
+        if not re.match(r"^(\+7|8)\d{10}$", cleaned):
+            raise ValueError("Неверный формат телефона! Используйте: +79991112233 или 89990000000")
+        return cleaned
+
+    # Валидация города
+    @field_validator("city")
+    @classmethod
+    def validate_city(cls, value: str | None) -> str | None:
+        if value is None: return None
+        cleaned = value.strip()
+        if not cleaned: return None
+        
+        if len(cleaned) < 2:
+            raise ValueError("Название города должно содержать не менее 2-х символов!")
+        return cleaned    
 
 
 # Что отдаем обратно в React

@@ -105,7 +105,7 @@ class UserUpdateInput(BaseModel):
 
 @router.put("/profile/update", status_code=200)
 async def update_user_profile(
-    payload: UserUpdateInput,
+    payload: schemas.UserUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { payOrder } from '../../orders/api';
 import { useNavigate } from 'react-router-dom';
 import { getMe, logoutUser, updateUserProfile, getUserOrders } from '../api';
+
+import axios from 'axios';
+
 import './Profile.css';
+
+
+const API_BASE_URL = 'http://localhost:8000';
 
 export const Profile = () => {
   const [user, setUser] = useState(null);
@@ -19,6 +25,8 @@ export const Profile = () => {
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [selectedOrderToPay, setSelectedOrderToPay] = useState(null);
   const [cardForm, setCardForm] = useState({ number: '', expiry: '', cvc: '' });
+  const [isEditing, setIsEditing] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
 
 
   // Глобальная загрузка данных пользователя и его заказов при открытии страницы
@@ -61,6 +69,47 @@ export const Profile = () => {
     setFormData({ ...formData, [name]: value });
   };
 
+  //  Функция отправки выбранного файла-картинки на бэкенд FastAPI
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0]; // Берем самый первый выбранный файл
+    if (!file) return;
+
+    // Быстрая проверка формата на стороне клиента (защита от вирусов и левых файлов)
+    if (!file.type.startsWith('image/')) {
+      alert('⚠️ Пожалуйста, выберите файл изображения (png, jpg, webp)!');
+      return;
+    }
+    // Ограничиваем размер (например, до 5 мегабайт), чтобы не забивать жесткий диск сервера
+    if (file.size > 5 * 1024 * 1024) {
+      alert('⚠️ Размер аватарки не должен превышать 5 МБ!');
+      return;
+    }
+
+    // Собираем FormData для отправки multipart/form-data
+    const uploadData = new FormData();
+    uploadData.append('file', file);
+
+    try {
+      setAvatarLoading(true); // Включаем шестеренку/лоадер внутри круга
+      
+      // Шлем файл на сервер
+      const response = await axios.post(`${API_BASE_URL}/api/v1/users/profile/avatar`, uploadData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        withCredentials: true // Обязательно куки авторизации
+      });
+
+      alert("🎉 Аватар успешно загружен и обновлен!");
+      
+      // Обновляем стейт юзера, чтобы картинка мгновенно прорисовалась на экране
+      setUser(prev => ({ ...prev, avatar_url: response.data.avatar_url }));
+      
+    } catch (err) {
+      alert("Не удалось загрузить фото: " + (err.response?.data?.detail || err.message));
+    } finally {
+      setAvatarLoading(false); // Выключаем лоадер
+    }
+  };
+
   // Сохранение обновленной анкеты в базу данных
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -68,7 +117,10 @@ export const Profile = () => {
       setSaveLoading(true);
       const response = await updateUserProfile(formData);
       alert("🎉 Личные данные успешно сохранены!");
-      setUser(response.user); // Обновляем локальное состояние анкеты свежими данными
+      setUser(prev => ({ ...prev, ...response.user }));  // Обновляем локальное состояние анкеты свежими данными
+
+      setIsEditing(false); // Закрываем режим редактирования после записи в БД
+
     } catch (err) {
       alert("Ошибка сохранения: " + (err.response?.data?.detail || err.message));
     } finally {
@@ -120,10 +172,30 @@ export const Profile = () => {
         {/* ЛЕВАЯ ЧАСТЬ: ПРОСМОТР ТЕКУЩИХ ДАННЫХ */}
         <div className="profile-info-card">
           <div className="profile-header-meta">
-            {/* Круглая авто-аватарка по первой букве логина */}
-            <div className="profile-avatar-circle">
-              {user.username ? user.username[0] : 'U'}
+
+            {/* Круглая аватарка: если есть фото — показываем его, если нет — первую букву */}
+            <div className="profile-avatar-circle" style={{ position: 'relative', overflow: 'hidden' }}>
+              {user.avatar_url ? (
+                <img src={`${API_BASE_URL}${user.avatar_url}`} alt="Аватар" onError={handleImageError} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                user.username ? user.username[0] : 'U'
+              )}
+              {/* Скрытый инпут для загрузки файла кликом по аватарке (задел на будущее) */}
+              <label htmlFor="avatar-file-input" style={{
+                 position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '10px', textAlign: 'center', padding: '3px 0', cursor: 'pointer', opacity: 0, transition: 'opacity 0.2s' 
+                 }} 
+                 className="avatar-hover-label">фото</label>
+
+                 <input 
+                type="file" 
+                id="avatar-file-input" 
+                onChange={handleAvatarUpload} 
+                accept="image/*" 
+                style={{ display: 'none' }} 
+              />
+
             </div>
+
             <div>
               <h4 className="profile-username-title">@{user.username}</h4>
               <span style={{ fontSize: '13px', color: '#16a34a', fontWeight: '700' }}>В сети 🟢</span>
@@ -145,27 +217,40 @@ export const Profile = () => {
           </button>
         </div>
 
-        {/* ПРАВАЯ ЧАСТЬ: ФОРМА РЕДАКТИРОВАНИЯ ДАННЫХ */}
+        {/* ПРАВАЯ ЧАСТЬ: РЕДАКТИРОВАНИЕ ДАННЫХ */}
         <div>
-          <form onSubmit={handleFormSubmit} className="profile-edit-form">
-            <h3 style={{ margin: '0 0 10px 0', color: '#374151' }}>⚙️ Редактировать контакты</h3>
+          <div className="profile-edit-form" style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e3e6f0' }}>
+            <h3 style={{ margin: '0 0 15px 0', color: '#374151' }}>⚙️ Редактировать контакты</h3>
 
-            <label>Ваше Имя:</label>
-            <input type="text" name="first_name" value={formData.first_name} onChange={handleInputChange} placeholder="Введите имя" className="profile-input-field" />
+            <label style={{ fontWeight: '600', fontSize: '13px', display: 'block', marginBottom: '4px' }}>Ваше Имя:</label>
+            <input type="text" name="first_name" disabled={!isEditing} value={formData.first_name} onChange={handleInputChange} placeholder="Введите имя" style={{ width: '100%', padding: '10px', border: '2px solid #e5e7eb', borderRadius: '6px', marginBottom: '12px', backgroundColor: !isEditing ? '#f3f4f6' : '#fff', color: '#000', boxSizing: 'border-box' }} />
 
-            <label>Ваша Фамилия:</label>
-            <input type="text" name="last_name" value={formData.last_name} onChange={handleInputChange} placeholder="Введите фамилию" className="profile-input-field" />
+            <label style={{ fontWeight: '600', fontSize: '13px', display: 'block', marginBottom: '4px' }}>Ваша Фамилия:</label>
+            <input type="text" name="last_name" disabled={!isEditing} value={formData.last_name} onChange={handleInputChange} placeholder="Введите фамилию" style={{ width: '100%', padding: '10px', border: '2px solid #e5e7eb', borderRadius: '6px', marginBottom: '12px', backgroundColor: !isEditing ? '#f3f4f6' : '#fff', color: '#000', boxSizing: 'border-box' }} />
 
-            <label>Номер телефона:</label>
-            <input type="text" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+7 (___) ___-__-__" className="profile-input-field" />
+            <label style={{ fontWeight: '600', fontSize: '13px', display: 'block', marginBottom: '4px' }}>Номер телефона:</label>
+            <input type="text" name="phone" disabled={!isEditing} value={formData.phone} onChange={handleInputChange} placeholder="+79991112233" style={{ width: '100%', padding: '10px', border: '2px solid #e5e7eb', borderRadius: '6px', marginBottom: '12px', backgroundColor: !isEditing ? '#f3f4f6' : '#fff', color: '#000', boxSizing: 'border-box' }} />
 
-            <label>Город доставки:</label>
-            <input type="text" name="city" value={formData.city} onChange={handleInputChange} placeholder="Например, Томск" className="profile-input-field" />
+            <label style={{ fontWeight: '600', fontSize: '13px', display: 'block', marginBottom: '4px' }}>Город доставки:</label>
+            <input type="text" name="city" disabled={!isEditing} value={formData.city} onChange={handleInputChange} placeholder="Например, Томск" style={{ width: '100%', padding: '10px', border: '2px solid #e5e7eb', borderRadius: '6px', marginBottom: '15px', backgroundColor: !isEditing ? '#f3f4f6' : '#fff', color: '#000', boxSizing: 'border-box' }} />
 
-            <button type="submit" disabled={saveLoading} className="btn-profile-save">
-              {saveLoading ? "Сохранение..." : "Сохранить изменения"}
-            </button>
-          </form>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {!isEditing ? (
+                <button type="button" onClick={() => setIsEditing(true)} style={{ flex: 1, padding: '11px', backgroundColor: '#4e73df', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', fontSize: '14px' }}>
+                  ✏️ Редактировать данные
+                </button>
+              ) : (
+                <>
+                  <button type="button" onClick={handleFormSubmit} disabled={saveLoading} style={{ flex: 2, padding: '11px', backgroundColor: '#1cc88a', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', fontSize: '14px' }}>
+                    {saveLoading ? "Сохранение..." : "💾 Сохранить"}
+                  </button>
+                  <button type="button" onClick={() => { setIsEditing(false); setFormData({ first_name: user.first_name || '', last_name: user.last_name || '', phone: user.phone || '', city: user.city || '' }); }} style={{ flex: 1, padding: '11px', backgroundColor: '#858796', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', fontSize: '14px' }}>
+                    ✕ Отмена
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
       </div>

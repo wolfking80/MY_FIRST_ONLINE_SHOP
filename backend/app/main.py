@@ -1,3 +1,5 @@
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.features import all_models
@@ -50,3 +52,21 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/")
 def read_root():
     return {"status": "Backend is alive!"}
+
+
+# Глобальный перехватчик ошибок валидации Pydantic
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc: RequestValidationError):
+    # Достаем чистый текст ошибки из ValueError
+    error_details = exc.errors()
+    if error_details:
+        error_msg = error_details[0].get("msg", "Ошибка валидации данных")
+        # Убираем системную приставку Pydantic "Value error, " если она добавилась
+        error_msg = error_msg.replace("Value error, ", "")
+    else:
+        error_msg = "Неверный формат заполнения полей"
+
+    return JSONResponse(
+        status_code=400,
+        content={"detail": error_msg}
+    )
