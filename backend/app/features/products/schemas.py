@@ -18,6 +18,7 @@ class ProductShort(BaseModel):
     slug: str
     base_price: Decimal
     average_rating: float
+    reviews_count: int
     brand: BrandOut | None
     images: List[ImageOut]
     total_stock: int = 0
