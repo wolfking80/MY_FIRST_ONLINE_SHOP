@@ -68,7 +68,7 @@ export const Profile = ({ user, setUser }) => {
         console.error("Общий сбой загрузки профиля:", err);
       } finally {
         // Выключаем лоадер в любом случае, даже если картинка удалена на сервере!
-        setLoading(false); 
+        setLoading(false);
       }
     };
 
@@ -209,11 +209,11 @@ export const Profile = ({ user, setUser }) => {
               ) : (
                 <>
                   {user.avatar_url && (
-                    <img 
-                      src={`${API_BASE_URL}${user.avatar_url}`} 
-                      alt="Аватар" 
-                      onError={handleImageError} 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 2 }} 
+                    <img
+                      src={`${API_BASE_URL}${user.avatar_url}`}
+                      alt="Аватар"
+                      onError={handleImageError}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 2 }}
                     />
                   )}
                   {/* Текстовая заглушка с буквой теперь лежит на нижнем слое и подстрахует при ошибке 404 */}
@@ -222,7 +222,7 @@ export const Profile = ({ user, setUser }) => {
                   </span>
                 </>
               )}
-              
+
               <label htmlFor="avatar-file-input" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '10px', textAlign: 'center', padding: '3px 0', cursor: 'pointer', transition: 'opacity 0.2s', zIndex: 3 }} className="avatar-hover-label">
                 фото
               </label>
@@ -351,8 +351,21 @@ export const Profile = ({ user, setUser }) => {
                   )}
                 </div>
 
-                <div style={{ textAlign: 'right', marginTop: '10px', fontWeight: '700', color: '#111827' }}>
-                  Итоговая сумма: <span style={{ color: '#1cc88a' }}>{Number(order.total_amount).toLocaleString()} ₽</span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '12px', borderTop: '1px solid #f3f4f6', paddingTop: '10px', fontSize: '14px', color: '#4b5563' }}>
+                  <div style={{ marginBottom: '2px' }}>
+                    Сумма товаров: <span style={{ fontWeight: '600', color: '#111827' }}>{Number(order.subtotal).toLocaleString()} ₽</span>
+                  </div>
+
+                  {/* Выводим купон и сумму скидки, если они сохранены в заказе */}
+                  {order.coupon_code_applied && (
+                    <div style={{ color: '#1cc88a', fontWeight: '600', marginBottom: '4px' }}>
+                      🎁 Промокод: {order.coupon_code_applied} (-{Number(order.discount_amount).toLocaleString()} ₽)
+                    </div>
+                  )}
+
+                  <div style={{ fontWeight: '700', color: '#111827', fontSize: '16px', marginTop: '2px' }}>
+                    Итоговая сумма: <span style={{ color: '#4e73df' }}>{Number(order.total_amount).toLocaleString()} ₽</span>
+                  </div>
                 </div>
               </div>
             ))}
