@@ -28,3 +28,9 @@ export const deleteCartItem = async (itemId) => {
   const response = await apiClient.delete(`/cart/items/${itemId}`);
   return response.data;
 };
+
+// Проверить валидность введенного промокода
+export const checkCouponCode = async (code) => {
+  const response = await apiClient.get(`/products/validate/${encodeURIComponent(code)}`);
+  return response.data;
+};

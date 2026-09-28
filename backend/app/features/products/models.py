@@ -122,3 +122,13 @@ class Review(Base):
     
     product: Mapped["Product"] = relationship("Product", back_populates="reviews")
     user: Mapped["User"] = relationship("User", back_populates="reviews")
+
+
+class Coupon(Base):
+    __tablename__ = "coupons"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    code: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False) # Пример: TOMSK2026
+    discount_percent: Mapped[int] = mapped_column(Integer, nullable=False) # Процент скидки
+    valid_until: Mapped[datetime] = mapped_column(DateTime, nullable=False) # Срок действия
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")

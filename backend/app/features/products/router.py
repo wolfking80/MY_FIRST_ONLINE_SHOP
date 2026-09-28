@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 import uuid
 
@@ -14,6 +15,7 @@ from app.core.database import get_db
 from app.features.products.models import (
     Brand,
     Category,
+    Coupon,
     Product,
     ProductImage,
     ProductVariant,
@@ -494,3 +496,80 @@ async def add_product_review(
 
     await db.commit()
     return {"status": "success", "message": "Отзыв успешно опубликован!"}
+
+
+# Схема для валидации данных при создании промокода
+class CouponCreateInput(BaseModel):
+    code: str = Field(..., min_length=2, max_length=50, description="Уникальный код промокода")
+    discount_percent: int = Field(..., ge=1, le=100, description="Процент скидки от 1 до 100")
+    valid_until: datetime = Field(..., description="Дата и время окончания действия купона (ГГГГ-ММ-ДД ЧЧ:ММ:СС)")
+
+@router.post("/coupons/create", status_code=201)
+async def admin_create_coupon(
+    payload: CouponCreateInput,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(check_is_staff)  # Закрываем роут только для админов
+):
+    """
+    Админский роут для создания новых промокодов.
+    Доступен по адресу: /api/v1/products/coupons/create
+    """
+    # Проверяем, нет ли уже купона с таким кодом (без учета регистра)
+    existing_query = select(Coupon).where(Coupon.code.ilike(payload.code.strip()))
+    existing_result = await db.execute(existing_query)
+    if existing_result.scalars().first():
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Промокод с именем '{payload.code.upper()}' уже существует! 🛑"
+        )
+
+    # Создаем новый купон. По умолчанию is_active = True
+    new_coupon = Coupon(
+        code=payload.code.strip().upper(),  # Всегда сохраняем в верхнем регистре капсом
+        discount_percent=payload.discount_percent,
+        valid_until=payload.valid_until,
+    )
+    
+    db.add(new_coupon)
+    await db.commit()
+    
+    return {
+        "status": "success",
+        "message": "Промокод успешно создан! 🎫",
+        "coupon": {
+            "code": new_coupon.code,
+            "discount_percent": new_coupon.discount_percent,
+            "valid_until": new_coupon.valid_until.isoformat()
+        }
+    }
+
+
+
+@router.get("/validate/{code}", status_code=200)
+async def validate_coupon(code: str, db: AsyncSession = Depends(get_db)):
+    """
+    Проверить промокод на валидность и получить процент скидки.
+    Доступен по адресу: /api/v1/products/validate/{code}
+    """
+    # Ищем купон в базе данных (игнорируя регистр букв и пробелы)
+    query = select(Coupon).where(Coupon.code.ilike(code.strip()))
+    result = await db.execute(query)
+    coupon = result.scalars().first()
+
+    if not coupon:
+        raise HTTPException(status_code=404, detail="Такой промокод не существует ❌")
+
+    if not coupon.is_active:
+        raise HTTPException(status_code=400, detail="Этот промокод больше не активен 😔")
+
+    if coupon.valid_until < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Срок действия этого промокода истек ⏳")
+
+    return {
+        "status": "success",
+        "code": coupon.code.upper(),
+        "discount_percent": coupon.discount_percent
+    }
+    
+    
+    

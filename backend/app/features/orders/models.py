@@ -43,6 +43,7 @@ class Order(Base):
     
     # === ДОПОЛНИТЕЛЬНО ===
     customer_comment: Mapped[str | None] = mapped_column(Text)
+    coupon_code_applied: Mapped[str | None] = mapped_column(String(50)) # Примененный промокод
     # История изменений статусов (лог): [{"status": "paid", "at": "...", "by": "system"}]
     status_history: Mapped[list | None] = mapped_column(JSON, default=list)
     
