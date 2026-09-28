@@ -79,8 +79,19 @@ export const OrdersManagement = () => {
 
               {/* Подвал карточки заказа с динамической цепочкой статусов */}
               <div className="admin-order-card-footer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', marginTop: '15px', borderTop: '1px dashed #e3e6f0', paddingTop: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className="admin-order-total-price">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '14px', color: '#4b5563' }}>
+                  <div>
+                    Стоимость товаров: <span style={{ fontWeight: '600', color: '#111827' }}>{Number(order.subtotal).toLocaleString()} ₽</span>
+                  </div>
+
+                  {/* если к заказу применен купон, показываем его админу */}
+                  {order.coupon_code_applied && (
+                    <div style={{ color: '#1cc88a', fontWeight: '600' }}>
+                      🎫 Применен купон: <span style={{ textTransform: 'uppercase' }}>{order.coupon_code_applied}</span> (-{Number(order.discount_amount).toLocaleString()} ₽)
+                    </div>
+                  )}
+
+                  <span className="admin-order-total-price" style={{ marginTop: '4px', display: 'block' }}>
                     Сумма к оплате: {Number(order.total_amount).toLocaleString()} ₽
                   </span>
                 </div>
