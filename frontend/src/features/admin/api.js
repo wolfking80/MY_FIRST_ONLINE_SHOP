@@ -11,3 +11,9 @@ export const adminUpdateOrderStatus = async (orderId, newStatus) => {
   const response = await apiClient.patch(`/admin/orders/${orderId}/status?new_status=${newStatus}`);
   return response.data;
 };
+
+// Создание промокодов
+export const adminCreateCoupon = async (couponData) => {
+  const response = await apiClient.post('/products/coupons/create', couponData);
+  return response.data;
+};

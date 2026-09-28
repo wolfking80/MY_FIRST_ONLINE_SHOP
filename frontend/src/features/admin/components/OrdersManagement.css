@@ -130,3 +130,82 @@
 .btn-admin-order-deliver:hover {
   background-color: #14a36f;
 }
+
+/* Панель генератора купонов */
+.admin-coupon-generator-box {
+  background-color: #f8fafc;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 30px;
+}
+
+.coupon-generator-title {
+  margin: 0 0 15px 0;
+  color: #1e293b;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.coupon-generator-form {
+  display: flex;
+  gap: 15px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+/* Группы инпутов */
+.form-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 120px;
+}
+
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+
+.form-input-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.coupon-form-input {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #000;
+  background-color: #fff;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.coupon-form-input:focus {
+  border-color: #4e73df;
+}
+
+/* Кнопка отправки */
+.btn-create-coupon-submit {
+  padding: 9px 20px;
+  background-color: #1cc88a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  height: 38px;
+  transition: background-color 0.2s;
+}
+
+.btn-create-coupon-submit:hover {
+  background-color: #17a673;
+}
+
+.btn-create-coupon-submit:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+}
+

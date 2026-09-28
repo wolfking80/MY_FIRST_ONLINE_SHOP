@@ -6,6 +6,7 @@ import { ProductsManagement } from './ProductManagement.jsx';
 import { AddProductForm } from './AddProductForm';
 import { AdminOverview } from './AdminOverview.jsx';
 import { OrdersManagement } from './OrdersManagement';
+import { CouponsManagement } from './CouponsManagement';
 import './AdminDashboard.css';
 
 export const AdminDashboard = ({ user }) => {
@@ -34,6 +35,13 @@ export const AdminDashboard = ({ user }) => {
           className={`sidebar-btn ${activeTab === 'orders' ? 'active' : ''}`}
         >
           🛍️ Управление заказами
+        </button>
+
+        <button
+          onClick={() => setActiveTab('coupons')}
+          className={`sidebar-btn ${activeTab === 'coupons' ? 'active' : ''}`}
+        >
+          🎫 Промокоды и купоны
         </button>
 
         <button
@@ -71,6 +79,8 @@ export const AdminDashboard = ({ user }) => {
           {activeTab === 'overview' && <AdminOverview currentUser={user} />}
 
           {activeTab === 'orders' && <OrdersManagement />}
+
+          {activeTab === 'coupons' && <CouponsManagement />}
 
           {activeTab === 'add_product' && <AddProductForm />}
 

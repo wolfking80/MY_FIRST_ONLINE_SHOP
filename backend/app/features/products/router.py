@@ -527,7 +527,7 @@ async def admin_create_coupon(
     new_coupon = Coupon(
         code=payload.code.strip().upper(),  # Всегда сохраняем в верхнем регистре капсом
         discount_percent=payload.discount_percent,
-        valid_until=payload.valid_until,
+        valid_until=payload.valid_until.replace(tzinfo=None),
     )
     
     db.add(new_coupon)
