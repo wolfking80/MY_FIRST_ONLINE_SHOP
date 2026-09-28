@@ -546,7 +546,11 @@ async def admin_create_coupon(
 
 
 @router.get("/validate/{code}", status_code=200)
-async def validate_coupon(code: str, db: AsyncSession = Depends(get_db)):
+async def validate_coupon(
+    code: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+    ):
     """
     Проверить промокод на валидность и получить процент скидки.
     Доступен по адресу: /api/v1/products/validate/{code}
@@ -559,6 +563,23 @@ async def validate_coupon(code: str, db: AsyncSession = Depends(get_db)):
     if not coupon:
         raise HTTPException(status_code=404, detail="Такой промокод не существует ❌")
 
+    # === ПРОВЕРКА НА ПОВТОРНОЕ ИСПОЛЬЗОВАНИЕ ===
+    from app.features.orders.models import Order
+    
+    clean_code = code.strip()
+    already_used_query = select(Order.id).where(
+        Order.user_id == current_user.id,
+        Order.coupon_code_applied.ilike(clean_code)
+    )
+    already_used_result = await db.execute(already_used_query)
+    
+    if already_used_result.scalar() is not None:
+        raise HTTPException(
+            status_code=400, 
+            detail="Вы уже использовали этот промокод в одном из прошлых заказов! 🛑"
+        )
+    # =====================================================================
+    
     if not coupon.is_active:
         raise HTTPException(status_code=400, detail="Этот промокод больше не активен 😔")
 

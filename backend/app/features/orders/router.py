@@ -98,6 +98,20 @@ async def checkout_order(
         if not coupon:
             raise HTTPException(status_code=400, detail="Указанный промокод не существует ❌")
         
+        # Проверяем, нет ли у текущего юзера заказов, где этот купон уже был успешно применен
+        clean_code = payload.coupon_code.strip()
+        already_used_query = select(Order.id).where(
+            Order.user_id == current_user.id,
+            Order.coupon_code_applied.ilike(clean_code)  # Ищем без учета регистра букв и пробелов
+        )
+        already_used_result = await db.execute(already_used_query)
+        
+        if already_used_result.scalar() is not None:
+            raise HTTPException(
+                status_code=400, 
+                detail="Вы уже использовали этот промокод в одном из своих прошлых заказов! 🛑"
+            )
+            
         if not coupon.is_active:
             raise HTTPException(status_code=400, detail="Этот промокод больше не активен 😔")
             
