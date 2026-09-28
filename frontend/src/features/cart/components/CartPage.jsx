@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getUserCart, updateCartItemQuantity, deleteCartItem } from '../api';
+import { getUserCart, updateCartItemQuantity, deleteCartItem, checkCouponCode } from '../api';
 import { checkoutOrder } from '../../orders/api'; // Подключили API оформления заказа
 import './CartPage.css';
 
@@ -10,6 +10,34 @@ export const CartPage = () => {
   // Стейты для модального окна оформления заказа
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutForm, setCheckoutForm] = useState({ phone: '', address: '', comment: '' });
+
+  // === СТЕЙТЫ И ОБРАБОТЧИК ДЛЯ ПРОМОКОДОВ ===
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState('');
+  const [isChecking, setIsChecking] = useState(false);
+
+  const handleApplyCoupon = async (e) => {
+    e.preventDefault();
+    if (!couponCode.trim()) return;
+    setIsChecking(true);
+    setCouponError('');
+    try {
+      const data = await checkCouponCode(couponCode.trim());
+      setAppliedCoupon(data); 
+    } catch (err) {
+      setCouponError(err.response?.data?.detail || 'Неверный промокод ❌');
+      setAppliedCoupon(null);
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError('');
+  };
 
   // Функция загрузки данных корзины из базы данных
   const loadCart = async () => {
@@ -77,7 +105,8 @@ export const CartPage = () => {
       const response = await checkoutOrder({
         phone: checkoutForm.phone,
         delivery_address: checkoutForm.address,
-        comment: checkoutForm.comment
+        comment: checkoutForm.comment,
+        coupon_code: appliedCoupon ? appliedCoupon.code : null
       });
       alert(`🎉 Заказ №${response.order_id} успешно оформлен! Проверить его статус можно в Личном кабинете.`);
       setIsCheckoutModalOpen(false);
@@ -97,6 +126,19 @@ export const CartPage = () => {
       </div>
     );
   }
+
+    // === МАТЕМАТИКА СКИДКИ ===
+  const subtotal = cart.items.reduce((sum, item) => {
+    const currentVariant = item.product?.variants?.find(v => v.id === item.variant_id);
+    const maxStock = currentVariant ? parseInt(currentVariant.stock, 10) : 0;
+    const actualQuantity = item.quantity > maxStock ? maxStock : item.quantity;
+    return sum + (Number(item.product?.base_price) || 0) * actualQuantity;
+  }, 0);
+
+  const discountPercent = appliedCoupon ? appliedCoupon.discount_percent : 0;
+  const discountAmount = (subtotal * discountPercent) / 100;
+  const finalTotal = Math.max(0, subtotal - discountAmount);
+
 
   return (
     <div className="cart-page-container">
@@ -181,11 +223,36 @@ export const CartPage = () => {
       </div>
 
       {/* Итоговая строка */}
-      <div className="cart-summary-row">
-        <span className="cart-summary-label">Итого к оплате:</span>
-        <span className="cart-summary-value">
-          {Number(cart.total_price).toLocaleString()} ₽
-        </span>
+      {/* БЛОК ПРОМОКОДА */}
+      <div className="coupon-section" style={{ margin: '25px 0', padding: '15px', border: '2px dashed #cbd5e1', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <input
+            type="text"
+            placeholder="Введите код (например, TOMSK2026)"
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value)}
+            disabled={isChecking || appliedCoupon}
+            style={{ padding: '10px', flex: 1, borderRadius: '6px', border: '2px solid #e2e8f0', textTransform: 'uppercase', color: '#000' }}
+          />
+          {!appliedCoupon ? (
+            <button type="button" onClick={handleApplyCoupon} disabled={isChecking} style={{ padding: '10px 20px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>
+              {isChecking ? 'Проверка...' : 'Применить'}
+            </button>
+          ) : (
+            <button type="button" onClick={handleRemoveCoupon} style={{ padding: '10px 20px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>
+              Удалить
+            </button>
+          )}
+        </div>
+        {couponError && <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '6px' }}>{couponError}</p>}
+        {appliedCoupon && <p style={{ color: '#10b981', fontSize: '14px', marginTop: '6px', fontWeight: '600' }}>🎉 Промокод активирован! Скидка {appliedCoupon.discount_percent}%</p>}
+      </div>
+
+      {/* ИТОГОВЫЙ БЛОК С УЧЕТОМ СКИДКИ */}
+      <div className="cart-summary-block" style={{ borderTop: '2px solid #e5e7eb', paddingTop: '15px' }}>
+        <p>Сумма товаров: <b>{subtotal.toLocaleString()} ₽</b></p>
+        {appliedCoupon && <p style={{ color: '#10b981' }}>Скидка ({appliedCoupon.discount_percent}%): <b>-{discountAmount.toLocaleString()} ₽</b></p>}
+        <h3 style={{ fontSize: '22px', marginTop: '10px' }}>Итого к оплате: <span style={{ color: '#3b82f6' }}>{finalTotal.toLocaleString()} ₽</span></h3>
       </div>
 
       {/* Кнопка оформления, открывающая модальное окно */}

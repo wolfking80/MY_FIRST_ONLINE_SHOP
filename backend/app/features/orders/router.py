@@ -13,7 +13,7 @@ from app.features.products import router
 from app.features.users.dependencies import check_is_staff, get_current_user
 from app.features.users.models import User
 from app.features.carts.models import Cart, CartItem
-from app.features.products.models import ProductVariant
+from app.features.products.models import Coupon, ProductVariant
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
@@ -41,6 +41,7 @@ class OrderCreateInput(BaseModel):
     phone: str
     delivery_address: str
     comment: str | None = None
+    coupon_code: str | None = None
 
 
 @router.post("/checkout", status_code=201)
@@ -83,6 +84,34 @@ async def checkout_order(
 
         items_sum += Decimal(str(item.quantity)) * Decimal(str(item.product.base_price))
         items_to_process.append((item, variant))
+        
+        # === СЕРВЕРНАЯ ВАЛИДАЦИЯ ПРОМОКОДА ===
+    discount_amount = Decimal("0.00")
+    coupon_to_save = None
+
+    if payload.coupon_code and payload.coupon_code.strip():
+        # Ищем купон в базе данных без учета регистра букв
+        coupon_query = select(Coupon).where(Coupon.code.ilike(payload.coupon_code.strip()))
+        coupon_result = await db.execute(coupon_query)
+        coupon = coupon_result.scalars().first()
+
+        if not coupon:
+            raise HTTPException(status_code=400, detail="Указанный промокод не существует ❌")
+        
+        if not coupon.is_active:
+            raise HTTPException(status_code=400, detail="Этот промокод больше не активен 😔")
+            
+        if coupon.valid_until < datetime.utcnow():
+            raise HTTPException(status_code=400, detail="Срок действия промокода истек ⏳")
+
+        # Высчитываем скидку в рублях
+        discount_percent = Decimal(str(coupon.discount_percent))
+        discount_amount = (items_sum * discount_percent) / Decimal("100.00")
+        coupon_to_save = coupon.code.upper()
+
+    # Финальная сумма к оплате с защитой от ухода в минус
+    total_amount = max(Decimal("0.00"), items_sum - discount_amount)
+
 
     # Создаем основной заказ. Времена created_at и updated_at БД проставит сама через func.now()
     new_order = Order(
@@ -91,13 +120,14 @@ async def checkout_order(
         payment_status="pending",
         subtotal=items_sum,
         delivery_price=Decimal("0.00"),
-        discount_amount=Decimal("0.00"),
-        total_amount=items_sum,
+        discount_amount=discount_amount,
+        total_amount=total_amount,
         shipping_address=payload.delivery_address,
         contact_phone=payload.phone,
         recipient_name=f"{current_user.first_name or ''} {current_user.last_name or ''}".strip()
         or current_user.username,
         customer_comment=payload.comment,
+        coupon_code_applied=coupon_to_save,
         status_history=[],  # Оставляем чистый пустой JSON-массив, чтобы не ломать валидацию сериализатора БД
         updated_at=func.now(),  # передаем нативную SQL-функцию текущего времени СУБД
     )
